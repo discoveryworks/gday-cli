@@ -1,0 +1,53 @@
+# gday configuration
+# Copy to ~/.config/gday/config.yml and customize
+
+# Calendar names (must match your Google Calendar names exactly)
+calendars:
+  - "Personal"
+  - "Work" 
+  - "Appointments"
+  - "Family"
+
+# Prompt configuration with rotation settings
+prompts:
+  - name: "Daily Reflection"
+    frequency: daily  # Show every day
+    content:
+      - "## 🧞‍♂️ What is top-of-mind today? What do you want right now?"
+
+  - name: "Weekly Areas of Focus"
+    frequency: random(3)  # Show 3 random prompts each day
+    content:
+      - "## 🪸😎 What's the most SELF-focused thing you've done lately?"
+      - "## 🪸💰 What's the most MONEY-focused thing you've done lately?"  
+      - "## 🪸💼 What's the most CAREER-focused thing you've done lately?"
+      - "## 🪸👪 What's the most FAMILY-focused thing you've done lately?"
+      - "## 🪸🍎 What's the most HEALTH-focused thing you've done lately?"
+      - "## 🪸💀 What's the most SPIRIT-focused thing you've done lately?"
+      - "## 🪸🐒 What's the most FRIENDS-focused thing you've done lately?"
+      - "## 🪸🌱 What's the most LEARNING-focused thing you've done lately?"
+
+  - name: "Family Check-in"
+    frequency: rotating(2)  # Show 2 items, cycle through all fairly
+    content:
+      - "## 🧞‍♂️ What's top-of-mind for your partner?"
+      - "## 🧞‍♂️ What's top-of-mind for your kids?"
+      - "## 🧞‍♂️ What's top-of-mind for extended family?"
+
+  - name: "Daily Review"
+    frequency: daily
+    content:
+      - "## 🥄 What did you spend energy on yesterday?"
+      - "## 🚢 What did you ship yesterday?"
+      - "## 🃏 What wildcards are in play today?"
+      - "## 💭 What's on your mind right now?"
+
+# Appointments to exclude from "Later Today" section
+# These will appear in main schedule but not in the filtered "Later Today" view
+filtered_appointments:
+  - "🍅 Pomodoro"
+  - "🍜 Lunch"
+  - "☕ Coffee Break"
+  - "🏋️ Workout"
+  - "🚗 Commute"
+  - "Personal Time"

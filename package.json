@@ -1,0 +1,47 @@
+{
+  "name": "gday-cli",
+  "version": "3.10.0",
+  "description": "Personal calendar and task management CLI that integrates Google Calendar with daily workflows",
+  "main": "bin/gday",
+  "bin": {
+    "gday": "./bin/gday"
+  },
+  "scripts": {
+    "test": "bash -c './bin/gday --help | grep -q \"VERSION: 3.10.0\"'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jpb/gday-cli.git"
+  },
+  "keywords": [
+    "calendar",
+    "productivity",
+    "cli",
+    "google-calendar",
+    "task-management",
+    "daily-planning"
+  ],
+  "author": "JPB",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jpb/gday-cli/issues"
+  },
+  "homepage": "https://github.com/jpb/gday-cli#readme",
+  "engines": {
+    "node": ">=14"
+  },
+  "os": [
+    "darwin",
+    "linux"
+  ],
+  "dependencies": {},
+  "peerDependencies": {
+    "gcalcli": "*"
+  },
+  "files": [
+    "bin/",
+    "lib/",
+    "config.yml.example",
+    "README.md"
+  ]
+}

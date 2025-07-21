@@ -1,0 +1,357 @@
+#!/bin/bash
+
+# gday - Personal calendar and task management CLI
+# Version 3.10.0
+# Integrates Google Calendar with daily productivity workflows
+
+# Set script directory for library imports
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# Source library functions
+source "$SCRIPT_DIR/lib/banner.sh"
+source "$SCRIPT_DIR/lib/config.sh"  
+source "$SCRIPT_DIR/lib/calendar.sh"
+
+# Helper function to show only the "Later Today" section
+gday_later_today_section() {
+  gday_show_banner
+
+  # Load configuration
+  if ! gday_load_config; then
+    return 1
+  fi
+  
+  # Get filtered appointments
+  local filtered_appointments=$(gday_parse_filtered_appointments)
+  
+  # Get today's calendar data
+  local calendar_data=$(gday_get_calendar_data "today")
+  
+  # Calculate target date for filtering events
+  local target_day=$(date "+%a")
+  local target_month=$(date "+%b") 
+  local target_date=$(date "+%d")
+  
+  # Process calendar data and generate table
+  local body=$(gday_process_calendar_data "$calendar_data" "$target_day" "$target_month" "$target_date")
+  
+  # Generate filtered "Later Today" section
+  echo "$body" | generate_later_today_h2s "$filtered_appointments"
+}
+
+# Helper function to show filtered appointments
+gday_show_filtered_appointments() {
+  gday_show_banner
+
+  local config_file="$HOME/.config/gday/config.yml"
+  if [[ ! -f "$config_file" ]]; then
+    echo "Error: Configuration file not found at $config_file"
+    return 1
+  fi
+  
+  echo "## Filtered Appointments"
+  echo "The following appointments are excluded from 'Later Today' section:"
+  echo ""
+  
+  local in_filtered_appointments=false
+  
+  while IFS= read -r line; do
+    if [[ "$line" =~ ^filtered_appointments: ]]; then
+      in_filtered_appointments=true
+    elif [[ $in_filtered_appointments == true && "$line" =~ ^[[:space:]]*-[[:space:]]*(.*) ]]; then
+      local appointment=$(echo "$line" | sed 's/^[[:space:]]*-[[:space:]]*//' | sed 's/^"//' | sed 's/"$//')
+      echo "- $appointment"
+    elif [[ "$line" =~ ^[[:alpha:]]+: ]] && [[ $in_filtered_appointments == true ]]; then
+      # New section started, stop processing filtered appointments
+      break
+    fi
+  done < "$config_file"
+}
+
+# Helper function to show help
+gday_show_help() {
+  gday_show_banner
+  
+  echo "gday - Personal calendar and task management tool"
+  echo ""
+  echo "USAGE:"
+  echo "  gday [COMMAND|DATE]"
+  echo ""
+  echo "COMMANDS:"
+  echo "  auth              Re-authenticate with Google Calendar"
+  echo "  later             Show only the 'Later Today' section"
+  echo "  filtered          Show the list of filtered appointments"
+  echo "  help, --help      Show this help message"
+  echo ""
+  echo "DATE OPTIONS:"
+  echo "  (no args)         Show today's schedule (default)"
+  echo "  yesterday, yday   Show yesterday's schedule"
+  echo "  monday            Show most recent Monday's schedule"
+  echo "  tuesday           Show most recent Tuesday's schedule"
+  echo "  wednesday         Show most recent Wednesday's schedule"
+  echo "  thursday          Show most recent Thursday's schedule"
+  echo "  friday            Show most recent Friday's schedule"
+  echo "  saturday          Show most recent Saturday's schedule"
+  echo "  sunday            Show most recent Sunday's schedule"
+  echo ""
+  echo "EXAMPLES:"
+  echo "  gday              Show today's full schedule"
+  echo "  gday yesterday    Show yesterday's schedule"
+  echo "  gday friday       Show last Friday's schedule"
+  echo "  gday later        Show only appointments for later today"
+  echo "  gday filtered     Show which appointments are filtered out"
+  echo ""
+  echo "VERSION: 3.10.0"
+}
+
+# Process command line arguments and determine date
+process_date_args() {
+  case "$1" in
+    prev|yesterday|yday|then)
+      date_arg="yesterday"
+      display_date=$(date -v -1d "+%m/%d - %A")
+      week_number=$(date -v -1d "+%V")
+      ;;
+    monday|tuesday|wednesday|thursday|friday|saturday|sunday)
+      # Convert input to lowercase and capitalize first letter for display
+      day_lower=$(echo "$1" | tr '[:upper:]' '[:lower:]')
+      day_display=$(echo "${day_lower^}")
+
+      # Find the most recent occurrence of the specified day
+      current_day=$(date "+%A" | tr '[:upper:]' '[:lower:]')
+
+      if [[ "$current_day" == "$day_lower" ]]; then
+        # If today is the requested day, just use today
+        date_arg="today"
+        display_date=$(date "+%m/%d - %A")
+        week_number=$(date "+%V")
+      else
+        # Calculate days ago - first get day numbers (0=Sunday, 6=Saturday)
+        current_day_num=$(date "+%w")
+        target_day_num=0
+
+        case "$day_lower" in
+          monday) target_day_num=1 ;;
+          tuesday) target_day_num=2 ;;
+          wednesday) target_day_num=3 ;;
+          thursday) target_day_num=4 ;;
+          friday) target_day_num=5 ;;
+          saturday) target_day_num=6 ;;
+          sunday) target_day_num=0 ;;
+        esac
+
+        # Calculate days to go back
+        days_ago=$(( ($current_day_num - $target_day_num + 7) % 7 ))
+        if [[ $days_ago -eq 0 ]]; then
+          days_ago=7  # If calculated as 0, we want the previous week
+        fi
+
+        # Set the date argument
+        date_arg="$days_ago days ago"
+        display_date=$(date -v "-${days_ago}d" "+%m/%d - %A")
+        week_number=$(date -v "-${days_ago}d" "+%V")
+      fi
+      ;;
+    *)
+      date_arg="today"
+      display_date=$(date "+%m/%d - %A")
+      week_number=$(date "+%V")
+      ;;
+  esac
+}
+
+# Process prompts from YAML configuration
+process_prompts() {
+  local config_file="$HOME/.config/gday/config.yml"
+  
+  # Parse new YAML structure
+  typeset -A prompt_groups_freq
+  typeset -A prompt_groups_content
+  local current_group=""
+  local current_frequency=""
+  local in_content=false
+  local in_prompts=false
+  
+  while IFS= read -r line; do
+    # Check for prompts section
+    if [[ "$line" =~ ^prompts: ]]; then
+      in_prompts=true
+      continue
+    fi
+    
+    # Stop when we hit a non-prompts section
+    if [[ "$line" =~ ^[[:alpha:]_]+: ]] && [[ $in_prompts == true ]] && [[ ! "$line" =~ ^[[:space:]] ]]; then
+      break
+    fi
+    
+    if [[ $in_prompts == true ]]; then
+      if [[ "$line" =~ ^[[:space:]]*-[[:space:]]*name:[[:space:]]*\"(.*)\" ]]; then
+        # Start of new prompt group
+        current_group="${BASH_REMATCH[1]}"
+        in_content=false
+      elif [[ "$line" =~ ^[[:space:]]*frequency:[[:space:]]*(.*) ]]; then
+        # Frequency line
+        current_frequency="${BASH_REMATCH[1]}"
+        # Remove comments
+        current_frequency=$(echo "$current_frequency" | sed 's/#.*//' | sed 's/[[:space:]]*$//')
+        prompt_groups_freq[$current_group]="$current_frequency"
+      elif [[ "$line" =~ ^[[:space:]]*content: ]]; then
+        # Start of content section
+        in_content=true
+        prompt_groups_content[$current_group]=""
+      elif [[ $in_content == true && "$line" =~ ^[[:space:]]*-[[:space:]]*(.*) ]]; then
+        # Content line
+        local prompt=$(echo "$line" | sed 's/^[[:space:]]*-[[:space:]]*//' | sed 's/^"//' | sed 's/"$//')
+        local current_content="${prompt_groups_content[$current_group]}"
+        if [[ -z "$current_content" ]]; then
+          prompt_groups_content[$current_group]="$prompt"
+        else
+          prompt_groups_content[$current_group]="$current_content|$prompt"
+        fi
+      fi
+    fi
+  done < "$config_file"
+  
+  # Process each prompt group based on frequency
+  for group in "${!prompt_groups_freq[@]}"; do
+    local frequency="${prompt_groups_freq[$group]}"
+    local content="${prompt_groups_content[$group]}"
+    # Split content by | delimiter
+    IFS='|' read -A prompts <<< "$content"
+    
+    if [[ "$frequency" == "daily" ]]; then
+      # Show all prompts from this group
+      for prompt in "${prompts[@]}"; do
+        echo -e "${prompt}\n\n"
+      done
+    elif [[ "$frequency" =~ "rotating\(([0-9]+)\)" ]]; then
+      # Rotating frequency - show N prompts with fair distribution
+      local count="${BASH_REMATCH[1]}"
+      local day_of_year=$(date +%j)
+      local total_prompts=${#prompts[@]}
+      # Calculate starting index for today
+      local start_index=$(( (day_of_year * count) % total_prompts ))
+      
+      # Show the specified number of prompts
+      for ((i = 0; i < count && i < total_prompts; i++)); do
+        local index=$(( (start_index + i) % total_prompts ))
+        echo -e "${prompts[$index]}\n\n"
+      done
+    elif [[ "$frequency" =~ "random\(([0-9]+)\)" ]]; then
+      # Random frequency - show N random prompts
+      local count="${BASH_REMATCH[1]}"
+      local selected=()
+      local available=("${prompts[@]}")
+      
+      # Seed random with date for consistency within the day
+      RANDOM=$(date +%j)
+      
+      # Pick random prompts without replacement
+      for ((i = 0; i < count && ${#available[@]} > 0; i++)); do
+        local rand_index=$((RANDOM % ${#available[@]}))
+        echo -e "${available[$rand_index]}\n\n"
+        # Remove selected prompt from available list
+        available=("${available[@]:0:$rand_index}" "${available[@]:$((rand_index + 1))}")
+      done
+    fi
+  done
+}
+
+# Main gday function
+main() {
+  case "$1" in
+    auth)
+      echo "Removing gcalcli OAuth token..."
+      touch ~/.gcalcli_oauth
+      rm ~/.gcalcli_oauth
+      echo "running \`gcalcli agenda\`. If this fails, try \`gcalcli init\` to force the auth flow"
+      gcalcli init
+      return
+      ;;
+    later)
+      # Only show the "Later Today" section
+      gday_later_today_section
+      return
+      ;;
+    filtered)
+      # Show filtered appointments from config
+      gday_show_filtered_appointments
+      return
+      ;;
+    --help|help)
+      gday_show_help
+      return
+      ;;
+  esac
+
+  # Process date arguments
+  process_date_args "$1"
+
+  # Load configuration
+  if ! gday_load_config; then
+    return 1
+  fi
+
+  # Validate calendars first
+  if ! gday_validate_calendars; then
+    return 1
+  fi
+
+  gday_show_banner
+
+  # Calculate target date for filtering events
+  local target_day target_month target_date
+  
+  if [[ "$date_arg" == "today" ]]; then
+    target_day=$(date "+%a")
+    target_month=$(date "+%b")
+    target_date=$(date "+%d")
+  elif [[ "$date_arg" == "yesterday" ]]; then
+    target_day=$(date -v -1d "+%a")
+    target_month=$(date -v -1d "+%b")
+    target_date=$(date -v -1d "+%d")
+  elif [[ "$date_arg" =~ ([0-9]+)\ days\ ago ]]; then
+    local days_ago="${BASH_REMATCH[1]}"
+    target_day=$(date -v "-${days_ago}d" "+%a")
+    target_month=$(date -v "-${days_ago}d" "+%b")
+    target_date=$(date -v "-${days_ago}d" "+%d")
+  fi
+
+  # Get calendar data
+  local calendar_data=$(gday_get_calendar_data "$date_arg")
+  
+  # Process calendar data
+  local body=$(gday_process_calendar_data "$calendar_data" "$target_day" "$target_month" "$target_date")
+
+  # Format dateline
+  local dateline="# $display_date"
+  if [[ $display_date == *"Monday"* ]]; then
+    dateline="# $display_date - 📆 Week $week_number"
+  fi
+
+  echo -e "${dateline}\n\n"
+  
+  # Process and display prompts
+  process_prompts
+  
+  # Display main schedule table
+  local title="## 🪢 Todo Today"
+  local table_header="| Time    | Item                                                                                   |"
+  local table_separator="|---------|----------------------------------------------------------------------------------------|"
+  local kicker="\n******* DO WHATEVER THE SCHEDULE TELLS ME. AND ONLY THAT.**********\n\n\n"
+
+  echo -e "${title}\n${table_header}\n${table_separator}\n${body}\n\n"
+  echo -e "${kicker}"
+
+  # Show git activity report if yday-semantic exists
+  if command -v yday-semantic >/dev/null 2>&1; then
+    yday-semantic
+  fi
+
+  # Show the Later Today section
+  local filtered_appointments=$(gday_parse_filtered_appointments)
+  echo "$body" | generate_later_today_h2s "$filtered_appointments"
+}
+
+# Run main function with all arguments
+main "$@"
