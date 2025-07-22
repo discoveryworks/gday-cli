@@ -3,18 +3,36 @@
 # Calendar processing functionality for gday
 # Handles gcalcli integration, event parsing, and formatting
 
-# Setup emoji mapping for different times (function to avoid global scope issues)
-setup_emoji_map() {
-  typeset -A emoji_map
-  emoji_map[800]="🕗"; emoji_map[830]="🕣"; emoji_map[900]="🕘"; emoji_map[930]="🕤"
-  emoji_map[1000]="🕙"; emoji_map[1030]="🕥"; emoji_map[1100]="🕚"; emoji_map[1130]="🕦"  
-  emoji_map[1200]="🕛"; emoji_map[1230]="🕧"; emoji_map[100]="🕐"; emoji_map[130]="🕜"
-  emoji_map[200]="🕑"; emoji_map[230]="🕝"; emoji_map[300]="🕒"; emoji_map[330]="🕞"
-  emoji_map[400]="🕓"; emoji_map[430]="🕟"; emoji_map[500]="🕔"; emoji_map[530]="🕠"
-  emoji_map[600]="🕕"; emoji_map[630]="🕡"; emoji_map[700]="🕖"; emoji_map[730]="🕢"
-  
-  # Export for use in calling functions
-  declare -g emoji_map
+# Get emoji for a given time
+get_emoji_for_time() {
+  local time_number="$1"
+  case "$time_number" in
+    800) echo "🕗" ;;
+    830) echo "🕣" ;;
+    900) echo "🕘" ;;
+    930) echo "🕤" ;;
+    1000) echo "🕙" ;;
+    1030) echo "🕥" ;;
+    1100) echo "🕚" ;;
+    1130) echo "🕦" ;;
+    1200) echo "🕛" ;;
+    1230) echo "🕧" ;;
+    100) echo "🕐" ;;
+    130) echo "🕜" ;;
+    200) echo "🕑" ;;
+    230) echo "🕝" ;;
+    300) echo "🕒" ;;
+    330) echo "🕞" ;;
+    400) echo "🕓" ;;
+    430) echo "🕟" ;;
+    500) echo "🕔" ;;
+    530) echo "🕠" ;;
+    600) echo "🕕" ;;
+    630) echo "🕡" ;;
+    700) echo "🕖" ;;
+    730) echo "🕢" ;;
+    *) echo "" ;;
+  esac
 }
 
 # Function to add a pomodoro (30 minutes) to a given time
@@ -31,9 +49,6 @@ gday_process_calendar_data() {
   local target_month="$3" 
   local target_date="$4"
   local day_format="$target_day $target_month $target_date"
-  
-  # Setup emoji mapping
-  setup_emoji_map
   
   local body=""
   local lines=()
@@ -151,8 +166,10 @@ gday_process_calendar_data() {
     local time_number=$(echo "$time" | tr -d '[:alpha:]' | tr -d ':')
 
     if ! [[ $item =~ ^[^[:alnum:]] ]]; then # if item lacks emoji
-      local emoji=${emoji_map[$time_number]} # then add emoji
-      item="${emoji} $item"
+      local emoji=$(get_emoji_for_time "$time_number") # then add emoji
+      if [[ -n "$emoji" ]]; then
+        item="${emoji} $item"
+      fi
     fi
 
     # Format time with consistent spacing
@@ -231,11 +248,25 @@ gday_get_calendar_data() {
   local date_arg="$1"
   local calendar_args=$(gday_build_calendar_args)
   
-  local gcalcli_cmd="gcalcli $calendar_args agenda \"1am $date_arg\" \"11pm $date_arg\" --nocolor --no-military --details length"
+  echo "~~~ running gcalcli command for $date_arg ~~~"
+  echo ""
   
-  echo "~~~ running this gcalcli command for $date_arg ~~~\n\n    $gcalcli_cmd\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n\n"
+  # Build command as array to avoid eval issues
+  local cmd_array=()
+  cmd_array+=("gcalcli")
   
-  local calendar_data=$(eval "$gcalcli_cmd")
+  # Add calendar arguments
+  for cal in "${GCAL_CALENDARS[@]}"; do
+    cmd_array+=("--cal" "$cal")
+  done
+  
+  cmd_array+=("agenda" "1am $date_arg" "11pm $date_arg" "--nocolor" "--no-military" "--details" "length")
+  
+  echo "Command: ${cmd_array[*]}"
+  echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+  echo ""
+  
+  local calendar_data=$("${cmd_array[@]}" 2>&1)
   local calendar_data_no_color=$(echo "$calendar_data" | sed 's/\x1b\[[0-9;]*m//g')
   
   # Convert pipe characters to an em-dash (bc escaping pipes is hard)
