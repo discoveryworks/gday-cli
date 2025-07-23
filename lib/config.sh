@@ -151,7 +151,8 @@ gday_validate_calendars() {
   echo "Checking configured calendars..."
 
   # Print table header
-  echo "\n| Included? | Available Calendars              |"
+  echo ""
+  echo "| Included? | Available Calendars              |"
   echo "|-----------|----------------------------------|"
 
   # Process each available calendar
@@ -194,7 +195,8 @@ gday_validate_calendars() {
     fi
   done <<< "$available_calendars"
 
-  echo "\nValidation results:"
+  echo ""
+  echo "Validation results:"
   if [[ ${#missing_calendars[@]} -gt 0 ]]; then
     echo "⚠️  The following calendars are configured but not usable:"
     printf "   - %s\n" "${missing_calendars[@]}"
