@@ -32,7 +32,7 @@ brew install gday
 
 ### Manual Installation
 ```bash
-git clone https://github.com/dw/gday-cli.git
+git clone https://github.com/discoveryworks/gday-cli.git
 cd gday-cli
 chmod +x bin/gday
 sudo ln -sf $PWD/bin/gday /usr/local/bin/gday
