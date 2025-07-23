@@ -1,17 +1,22 @@
 🌞 Why did we build gday?
 =============================
 
-My calendar is a canonical source of truth for commitments of my time. But I live and breathe markdown. So gday pulls my calendar into markdown, breaks the day into pomodoro-sized chunks, and adds a little structure to my morning deck-clearing and day-planning.
+My calendar is a canonical source of truth for commitments of my time. But I live and breathe markdown. So gday
+- pulls my calendar into markdown,
+- breaks the day into pomodoro-sized chunks, and
+- adds a little structure to my morning deck-clearing and day-planning.
 
 🌞🌞 Who's it for?
 =============================
 
-Me! But maybe you too if you're brain is similarly shaped: terminal-first developers, productivity enthusiasts, and anyone who manages multiple Google Calendars while preferring command-line interfaces over GUI applications. Perfect for those who want calendar integration without leaving their development environment.
+Me!
+
+But maybe you too if you're brain is similarly shaped: terminal-first developers, productivity enthusiasts, and anyone who manages multiple Google Calendars while preferring command-line interfaces over GUI applications. Perfect for those who want calendar integration without leaving their development environment.
 
 
 🌞🌞🌞 What does it do?
 =============================
-gday-cli fetches the day'sevents from gCal and renders them as a markdown table, as well as emiting a few configurable productivity prompts.
+gday-cli fetches the day's events from gCal and renders them as a markdown table, (as well as emitting a few configurable productivity prompts). Tailor it to your own morning routine
 
 
 🌞🌞🌞🌞 How do I use it?
@@ -27,7 +32,7 @@ brew install gday
 
 ### Manual Installation
 ```bash
-git clone https://github.com/jpb/gday-cli.git
+git clone https://github.com/dw/gday-cli.git
 cd gday-cli
 chmod +x bin/gday
 sudo ln -sf $PWD/bin/gday /usr/local/bin/gday
@@ -44,6 +49,13 @@ sudo ln -sf $PWD/bin/gday /usr/local/bin/gday
    ```bash
    gday auth
    ```
+   
+   **Note:** This will prompt you to create a Google Cloud project and enable the Calendar API. You'll need to:
+   - Create credentials (OAuth 2.0) in the Google Cloud Console
+   - Download the client configuration 
+   - Complete the OAuth flow in your browser
+   
+   ⚠️ **Important:** Google requires periodic re-authentication (typically every 7 days for test apps). If you see authentication errors, run `gday auth` again.
 
 3. **Create configuration file:**
    ```bash
@@ -119,13 +131,21 @@ filtered_appointments:
 
 **"No Events" showing:**
 - Run `gday auth` to re-authenticate
-- Check calendar names in config match Google Calendar exactly
+- Check calendar names in config match Google Calendar exactly (case-sensitive)
 - Verify `gcalcli agenda today today` works independently
+
+**Authentication errors:**
+- Google test apps require re-authentication every ~7 days
+- Run `gday auth` when you see OAuth or permission errors
+- If persistent, delete `~/.gcalcli_oauth` and re-authenticate
+- Consider publishing your Google Cloud app to production for longer-lived tokens
 
 **Permission errors:**
 - Ensure `~/.config/gday/config.yml` is readable
 - Check Google Calendar sharing settings
+- Verify your Google Cloud project has Calendar API enabled
 
 **Missing dependencies:**
 - Install gcalcli: `pip install gcalcli`
 - On first run: `gcalcli init` to set up OAuth
+- Ensure you have Python 3.x installed
