@@ -1,0 +1,135 @@
+---
+name: well_formed_stories
+description: Standards for writing clear, actionable user stories using Gherkin syntax. Rules for articulating project requirements.
+globs: 
+alwaysApply: false
+filters:
+  - type: file_extension
+    pattern: "\\.feature$"
+  - type: content
+    pattern: "Feature:|Scenario:"
+actions:
+  - type: suggest
+    message: |
+      When writing user stories, follow these key principles:
+
+      1. Use Gherkin Syntax:
+         ```gherkin
+         Scenario: [Clear action-oriented title]
+           Given [precondition]
+           When [action]
+           Then [expected result]
+           And [additional results]
+         ```
+
+      2. Include Motivation Block:
+         ```gherkin
+         Feature: [Feature Name]
+           As a [role]
+           I want to [action]
+           Because [motivation/final cause]
+         ```
+
+      3. Story Title Guidelines:
+         - MUST include the word "should"
+         - NEVER use the word "can" (it camouflages desired behavior)
+         - Example: "User should be able to delete comment" (feature)
+         - Example: "User should not be able to delete comment" (bug)
+
+      Benefits:
+      - Drives out features from user's perspective
+      - Catches edge cases during planning
+      - Makes story size/complexity visible
+      - Forces consistent story granularity
+      - Enables git commit message consistency
+examples:
+  - input: |
+      Feature: Shopping Cart
+      Can add items
+
+      User goes to item page
+      Clicks add to cart
+      Item gets added
+    output: |
+      Feature: Shopping Cart
+        As a Shopper
+        I want to put items in my shopping cart
+        Because I want to be able to manage items before I check out
+
+        Scenario: User should be able to add item to cart
+          Given I'm a logged-in User
+          When I go to the Item page
+          And I click "Add item to cart"
+          Then the quantity of Items in my Cart should go up
+          And my Subtotal should increment
+          And the Warehouse Inventory should decrement
+metadata:
+  priority: high
+  version: 1.0
+  tags:
+    - user-stories
+    - gherkin
+    - bdd
+    - requirements
+---
+
+# Well-formed Stories
+
+When writing user stories, follow these key principles:
+
+1. **Use Gherkin Syntax:**
+   ```gherkin
+   Scenario: [Clear action-oriented title]
+     Given [precondition]
+     When [action]
+     Then [expected result]
+     And [additional results]
+   ```
+
+2. **Include Motivation Block:**
+   ```gherkin
+   Feature: [Feature Name]
+     As a [role]
+     I want to [action]
+     Because [motivation/final cause]
+   ```
+
+3. **Story Title Guidelines:**
+   - MUST include the word "should"
+   - NEVER use the word "can" (it camouflages desired behavior)
+   - Example: "User should be able to delete comment" (feature)
+   - Example: "User should not be able to delete comment" (bug)
+
+**Benefits:**
+- Drives out features from user's perspective
+- Catches edge cases during planning
+- Makes story size/complexity visible
+- Forces consistent story granularity
+- Enables git commit message consistency
+
+## Example
+
+**Input:**
+```gherkin
+Feature: Shopping Cart
+Can add items
+
+User goes to item page
+Clicks add to cart
+Item gets added
+```
+
+**Output:**
+```gherkin
+Feature: Shopping Cart
+  As a Shopper
+  I want to put items in my shopping cart
+  Because I want to be able to manage items before I check out
+
+  Scenario: User should be able to add item to cart
+    Given I'm a logged-in User
+    When I go to the Item page
+    And I click "Add item to cart"
+    Then the quantity of Items in my Cart should go up
+    And my Subtotal should increment
+    And the Warehouse Inventory should decrement

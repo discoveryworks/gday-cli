@@ -1,0 +1,50 @@
+---
+description: Applying the "You Aren't Gonna Need It" principle to development
+globs: "app/**/*.{rb,js,erb,haml,swift}"
+alwaysApply: false
+---
+# YAGNI (You Aren't Gonna Need It)
+
+## Core Philosophy
+- Implement features only when they are actually needed, not when you anticipate needing them
+- Avoid speculative generality and over-engineering
+- Challenge assumptions about future requirements
+- Focus on solving today's problems effectively
+- Recognize that predicting future needs is often inaccurate
+- "Premature optimization is the root of all evil"
+- Optimize for low cost-of-change
+
+## Application Design
+- Start with the simplest solution that addresses current requirements
+- Avoid building frameworks or abstractions for hypothetical future use cases
+- Don't add parameters, options, or fields "just in case"
+- Default to server-rendered Rails views until there's a clear need for client-side complexity
+- Use built-in Rails features before introducing specialized gems
+
+## Database Design
+- Create only the tables and columns needed for current functionality
+- Avoid creating "future-proofing" columns that aren't immediately used
+- Use migrations to evolve the schema as requirements change
+- Start with simple associations and refine as needed
+- Don't prematurely optimize for scale before it's necessary
+
+## Code Organization
+- Keep methods focused on current functionality
+- Defer extraction of shared code until clear patterns emerge from actual use
+- Don't create interfaces or abstractions until multiple implementations exist
+- Start with monolithic classes and extract concerns when complexity warrants it
+- Avoid premature componentization
+
+## When to Consider Future Needs
+- When the cost of later change would be prohibitively expensive
+- When making structural decisions that are difficult to reverse
+- When dealing with data structures that must maintain backward compatibility
+- When multiple team members agree the feature is imminently needed
+- When the current design would actively prevent an anticipated required change
+
+## Balanced Approach
+- YAGNI doesn't mean avoiding good design or ignoring technical debt
+- Write clean, well-tested code that solves current problems elegantly
+- Refactor as needs evolve rather than anticipating all possible changes
+- Document architectural decisions that might appear to violate YAGNI
+- Regularly revisit and validate assumptions about future requirements

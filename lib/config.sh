@@ -47,8 +47,8 @@ gday_parse_prompts() {
   local config_file="$HOME/.config/gday/config.yml"
   
   # Initialize associative arrays
-  typeset -A prompt_groups_freq
-  typeset -A prompt_groups_content
+  declare -A prompt_groups_freq
+  declare -A prompt_groups_content
   local current_group=""
   local current_frequency=""
   local in_content=false

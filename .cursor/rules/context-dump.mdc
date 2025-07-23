@@ -1,0 +1,24 @@
+---
+description: Context Dump Rule
+globs: 
+alwaysApply: true
+---
+
+## Context Dump Rule
+
+When Claude Code dumps context to the terminal, it should also write the same context dump to the MEMORY-BANK/CONTEXT.md file.
+
+The format should be:
+
+1. An H1 heading with the current date and time stamp
+2. The exact same context dump content that was written to the terminal
+
+For example:
+
+```markdown
+# Context Dump - [Date and Time]
+
+[Context dump content...]
+```
+
+This helps maintain a historical record of all context dumps for future reference.

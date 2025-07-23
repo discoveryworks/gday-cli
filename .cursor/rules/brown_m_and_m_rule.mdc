@@ -1,0 +1,13 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+# The Brown M&M Rule: Always consider the Rules
+
+- Every time you respond, be sure to scan the `.cursor/rules` folder, including [design-and-styling.mdc](mdc:.cursor/rules/design-and-styling.mdc), [developing-on-this-laptop.mdc](mdc:.cursor/rules/developing-on-this-laptop.mdc), [ECMAscripts.mdc](mdc:.cursor/rules/ECMAscripts.mdc), [general-guidelines.mdc](mdc:.cursor/rules/general-guidelines.mdc), [general-rules.mdc](mdc:.cursor/rules/general-rules.mdc), [ruby-on-rails.mdc](mdc:.cursor/rules/ruby-on-rails.mdc), [testing-software.mdc](mdc:.cursor/rules/testing-software.mdc), and any other .mdc files you find.
+- If you're confused or rules conflict, ask for clarification before continuing.
+- At the start of EVERY response, output exactly: "🟤🎸🟤⚡️🟤 I've scanned the rules folder, and my response is informed by {WHICHEVER RULES FILES ARE INFORMING YOUR RESPONSE} 🟤🎸🟤⚡️🟤\n"
+
+Why do we call it "Brown M&Ms?" Here's the story about Van Halen using brown M&Ms to run safety checks: https://www.npr.org/sections/therecord/2012/02/14/146880432/the-truth-about-van-halen-and-those-brown-m-ms

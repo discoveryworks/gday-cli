@@ -1,0 +1,123 @@
+---
+description: Git Commit Guidelines
+globs: 
+alwaysApply: true
+---
+---
+description: Git Commit Guidelines
+globs:
+alwaysApply: true
+---
+
+# Version Control Rules
+
+These rules govern how Git commits should be structured and managed in this project.
+
+## Commit Message Format
+
+All commit messages should follow the Conventional Commits specification, with a special format for commits that complete implementation plan steps:
+
+For regular commits:
+```
+<type>(<scope>): <short summary>
+
+<body>
+
+<footer>
+```
+
+For commits that complete an implementation plan step or task:
+```
+STEP (or TASK) <number>: <short summary>
+
+<body>
+
+<footer>
+```
+
+Where:
+- **type**: describes the kind of change (feat, fix, docs, style, refactor, test, chore)
+- **scope**: (optional) describes what part of the codebase is affected
+- **number**: the step number from the implementation plan that was completed
+- **summary**: brief description of the change in present tense, with proper capitalization and punctuation for step commits
+- **body**: detailed explanation of what changed and why
+- **footer**: (optional) references to issues, breaking changes, etc.
+
+## Conventional Commit Types
+
+- **feat**: A new feature or functionality
+- **fix**: A bug fix
+- **docs**: Documentation changes only
+- **style**: Changes that don't affect code functionality (formatting, etc.)
+- **refactor**: Code changes that neither fix bugs nor add features
+- **test**: Adding or correcting tests
+- **chore**: Changes to build process, dependencies, etc.
+
+## Commit Guidance
+
+1. **Atomic Commits**: Each commit should represent a single logical change
+2. **Complete Context**: The commit message should provide enough context to understand what changed and why
+   - Prefer describing **why** the change was made in the subject line, not just what was changed.
+   - Example:
+     - ✅ `fix(sidenav): prevent lifecycle error on toggle` — describes the problem being fixed
+     - ❌ `fix(sidenav): update change detection` — only describes what changed
+
+3. **Descriptive Messages**: Avoid vague messages like "fix bug" or "update file"
+4. **Present Tense**: Write commit messages in the present tense ("add feature" not "added feature")
+5. **Reference Issues**: If applicable, reference issues or tickets in the footer
+6. **Punctuation**: Messages should be proper English, starting with a capital letter (after the Conventional Commit type), ending with a period (or appropriate punctuation)
+
+## Automatic Commit Rules
+
+After material changes, create a commit:
+
+1. All modified files MUST be automatically committed
+2. Commit messages MUST follow the conventional commit format
+3. Commit messages MUST include:
+   - Type and scope (if applicable)
+   - Clear description of what changed
+   - Detailed explanation in the body
+   - Reference to the original prompts used to generate the changes
+   - Models and versions used (e.g., gpt4.1, gemini-2.5-pro-exp-03-25, etc.)
+4. The commit MUST include all related files that form a complete logical change
+5. You don't need to ask for permission to `git commit`
+
+## Examples
+
+✅ Correct Regular Commit Message:
+```
+feat(auth): Enable new users to sign up via registration form.
+
+- Implement initial user registration form with email validation
+- Add form with username, email, password fields with client-side validation
+- Set up form submission handler
+
+Changes were generated based on the following prompts:
+1. "Create a user registration form with validation"
+2. "Add client-side validation for email fields"
+
+Using-sonnet-20250219
+```
+
+✅ Correct Step Completion Commit Message:
+```
+STEP 2: Add authentication to secure user access and sessions.
+
+- Create User model with secure password
+- Add authentication controller with login/logout functionality
+- Implement session management
+- Create signup and login forms with validation
+- Add authentication tests
+
+🤖 Generated with [Claude Code](mdc:https:/claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+❌ Incorrect Commit Message:
+```
+Updated some files
+
+- Made changes to auth
+- Fixed some issues
+```

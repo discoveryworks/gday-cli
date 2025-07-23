@@ -1,0 +1,50 @@
+name: lean_hypotheses_mvp
+description: Standards for using Lean Hypotheses to define and validate Minimum Viable Products (MVPs). Rules for connecting user problems to product experiments and measuring outcomes.
+globs: 
+alwaysApply: false
+filters:
+actions:
+  - type: suggest
+    message: |
+      When defining an MVP, use Lean Hypotheses to focus your team and validate assumptions:
+
+      1. **Formulate a Lean Hypothesis:**
+         ```
+         We believe [TYPE OF USER] has a problem [DOING THING].
+         We can help them with [OUR SOLUTION].
+         We'll know we're right if [CHANGE IN METRIC].
+         ```
+
+      2. **Define the MVP:**  
+         - The MVP is the smallest experiment or feature that can in/validate your hypothesis.
+         - Avoid building full solutions up front; test the core assumption with minimal effort.
+
+      3. **Iterate Based on Results:**  
+         - If the metric changes as expected, iterate or expand.
+         - If not, revise your hypothesis and MVP.
+
+      **Benefits:**
+      - Keeps teams focused on real user problems
+      - Reduces wasted effort on unproven features
+      - Enables rapid learning and iteration
+
+      **Example:**
+      ```
+      Hypothesis:
+      We believe SHOPPERS have a problem CHOOSING FROM THE MASSIVE SELECTION OF PORK PRODUCTS.
+      We can help them by SHOWING RECOMMENDATIONS FROM OTHER SHOPPERS.
+      We'll know we're right if SHOPPERS ADD ITEMS TO CART MORE QUICKLY.
+
+      MVP:
+      Add a "Recommended Products" section curated by staff (no recommendation engine needed).
+      ```
+
+      If the MVP succeeds, iterate (e.g., segment recommendations by geography). If not, try a new hypothesis.
+metadata:
+  priority: high
+  version: 1.0
+  tags:
+    - lean
+    - mvp
+    - product-discovery
+    - experimentation

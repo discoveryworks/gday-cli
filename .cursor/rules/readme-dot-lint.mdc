@@ -1,0 +1,66 @@
+---
+name: README.lint Structure
+description: follow the README.lint format for consistent documentation
+author: Claude
+version: 1.0.0
+tags: [documentation, readme, structure]
+severity: error
+---
+
+# README.lint Structure
+
+Enforce README.md files to follow the README.lint format for consistent documentation.
+
+## When
+This should always be the format for README files.
+
+## Structure
+READMEs should have these sections in order:
+1. Title (H1) with repo/project name
+2. Why section (🌸 Why use [project]?)
+3. Who section (🌸🌸 Who benefits from this?)
+4. What section (🌸🌸🌸 What does it do?)
+5. How section (🌸🌸🌸🌸 How do I use it?)
+6. Extras section (🌸🌸🌸🌸🌸 Extras)
+
+## Example
+```markdown
+# [Project Name]
+
+🌸 Why use [Project Name]?
+=============================
+<!-- Why did we see the need to spend time and energy building this? -->
+
+
+🌸🌸 Who benefits from this?
+=============================
+<!-- Who is this repo for? -->
+
+
+🌸🌸🌸 What does it do?
+=============================
+<!-- What, exactly, is this thing? -->
+
+
+🌸🌸🌸🌸 How do I use it?
+=============================
+<!-- How do I set it up? How do I use it? -->
+
+
+🌸🌸🌸🌸🌸 Extras
+=============================
+<!-- Anything else that doesn't fit into the above categories -->
+```
+
+## Notes
+- Use H1 headings with `===` underline style for section headers
+- Use 🌸 emoji for visual distinction (one emoji for "Why", two for "Who", etc.)
+- If a project prefers a different emoji, it should:
+  1. Stick with one emoji type throughout
+  2. Maintain consistent section headers (Why, Who, What, How, Extras)
+- Add the README.lint badge to show conformance
+- The "Why" section should explain why time and energy was spent building this
+- The "Who" section should explain who the repo is for
+- The "What" section should explain exactly what this thing is
+- The "How" section should explain how to set it up and use it
+- The "Extras" section should contain anything that doesn't fit into the above categories
