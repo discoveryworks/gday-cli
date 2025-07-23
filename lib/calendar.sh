@@ -201,10 +201,10 @@ generate_later_today_h2s() {
       gsub(/ +/, " ", str)      # Normalize spaces
       return tolower(str)       # Case-insensitive comparison
     }
-    /^| [0-9]/ {
+    /^\| [0-9]/ {
       line = $0
-      sub(/^|[^|]+| /, "## ", line)  # Remove everything up to the title
-      sub(/ |$/, "", line)  # Remove trailing pipe
+      sub(/^\|[^|]+\| /, "## ", line)  # Remove everything up to the title
+      sub(/ \|$/, "", line)  # Remove trailing pipe
 
       # Extract appointment title for exact matching
       title = line
@@ -215,6 +215,7 @@ generate_later_today_h2s() {
       for (i in appts) {
         if (normalize(title) == normalize(appts[i])) {
           skip = 1
+          # print "FILTERED: " title " matches " appts[i] > "/dev/stderr"
           break
         }
       }

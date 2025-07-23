@@ -250,42 +250,45 @@ process_prompts() {
     local content="${group_contents[$i]}"
     # Split content by | delimiter
     IFS='|' read -a prompts <<< "$content"
+    
+    case "$frequency" in
+      "daily")
+        for prompt in "${prompts[@]}"; do
+          echo -e "${prompt}\n\n"
+        done
+        ;;
+      rotating\(*\))
+        # Extract count from frequency string
+        local count=$(echo "$frequency" | sed 's/rotating(\([0-9]*\))/\1/')
+        local day_of_year=$(date +%j)
+        local total_prompts=${#prompts[@]}
+        # Calculate starting index for today
+        local start_index=$(( (day_of_year * count) % total_prompts ))
 
-    if [[ "$frequency" == "daily" ]]; then
-      # Show all prompts from this group
-      for prompt in "${prompts[@]}"; do
-        echo -e "${prompt}\n\n"
-      done
-    elif [[ "$frequency" =~ "rotating\(([0-9]+)\)" ]]; then
-      # Rotating frequency - show N prompts with fair distribution
-      local count="${BASH_REMATCH[1]}"
-      local day_of_year=$(date +%j)
-      local total_prompts=${#prompts[@]}
-      # Calculate starting index for today
-      local start_index=$(( (day_of_year * count) % total_prompts ))
+        # Show the specified number of prompts
+        for ((i = 0; i < count && i < total_prompts; i++)); do
+          local index=$(( (start_index + i) % total_prompts ))
+          echo -e "${prompts[$index]}\n\n"
+        done
+        ;;
+      random\(*\))
+        # Extract count from frequency string
+        local count=$(echo "$frequency" | sed 's/random(\([0-9]*\))/\1/')
+        local selected=()
+        local available=("${prompts[@]}")
 
-      # Show the specified number of prompts
-      for ((i = 0; i < count && i < total_prompts; i++)); do
-        local index=$(( (start_index + i) % total_prompts ))
-        echo -e "${prompts[$index]}\n\n"
-      done
-    elif [[ "$frequency" =~ "random\(([0-9]+)\)" ]]; then
-      # Random frequency - show N random prompts
-      local count="${BASH_REMATCH[1]}"
-      local selected=()
-      local available=("${prompts[@]}")
+        # Seed random with date for consistency within the day
+        RANDOM=$(date +%j)
 
-      # Seed random with date for consistency within the day
-      RANDOM=$(date +%j)
-
-      # Pick random prompts without replacement
-      for ((i = 0; i < count && ${#available[@]} > 0; i++)); do
-        local rand_index=$((RANDOM % ${#available[@]}))
-        echo -e "${available[$rand_index]}\n\n"
-        # Remove selected prompt from available list
-        available=("${available[@]:0:$rand_index}" "${available[@]:$((rand_index + 1))}")
-      done
-    fi
+        # Pick random prompts without replacement
+        for ((i = 0; i < count && ${#available[@]} > 0; i++)); do
+          local rand_index=$((RANDOM % ${#available[@]}))
+          echo -e "${available[$rand_index]}\n\n"
+          # Remove selected prompt from available list
+          available=("${available[@]:0:$rand_index}" "${available[@]:$((rand_index + 1))}")
+        done
+        ;;
+    esac
   done
 }
 
