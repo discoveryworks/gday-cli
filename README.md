@@ -16,8 +16,12 @@ But maybe you too if you're brain is similarly shaped: terminal-first developers
 
 🌞🌞🌞 What does it do?
 =============================
-gday-cli fetches the day's events from gCal and renders them as a markdown table, (as well as emitting a few configurable productivity prompts). Tailor it to your own morning routine
+gday-cli fetches the day's events from gCal and renders them as a markdown table, (as well as emitting a few configurable productivity prompts). Tailor it to your own morning routine.
 
+gday turns this![](gcal_ux.png)
+
+into this
+![](markdown_table_ux.png)
 
 🌞🌞🌞🌞 How do I use it?
 =============================
@@ -41,12 +45,12 @@ sudo ln -sf $PWD/bin/gday /usr/local/bin/gday
    ```bash
    gday auth
    ```
-   
+
    **Note:** This will prompt you to create a Google Cloud project and enable the Calendar API. You'll need to:
    - Create credentials (OAuth 2.0) in the Google Cloud Console
-   - Download the client configuration 
+   - Download the client configuration
    - Complete the OAuth flow in your browser
-   
+
    ⚠️ **Important:** Google requires periodic re-authentication (typically every 7 days for test apps). If you see authentication errors, run `gday auth` again.
 
 3. **Create configuration file:**
@@ -66,15 +70,15 @@ sudo ln -sf $PWD/bin/gday /usr/local/bin/gday
 
 ## Commands
 
-| Command | Description |
-|---------|-------------|
-| `gday` | Show today's full schedule with prompts and calendar |
-| `gday yesterday` | Show yesterday's schedule |
-| `gday [day]` | Show most recent Monday/Tuesday/etc schedule |
-| `gday later` | Show only "Later Today" filtered appointments |
-| `gday filtered` | List appointments that are filtered from "Later Today" |
-| `gday auth` | Re-authenticate with Google Calendar |
-| `gday --help` | Show help and usage examples |
+| Command          | Description                                            |
+|------------------|--------------------------------------------------------|
+| `gday`           | Show today's full schedule with prompts and calendar   |
+| `gday yesterday` | Show yesterday's schedule                              |
+| `gday [day]`     | Show most recent Monday/Tuesday/etc schedule           |
+| `gday later`     | Show only "Later Today" filtered appointments          |
+| `gday filtered`  | List appointments that are filtered from "Later Today" |
+| `gday auth`      | Re-authenticate with Google Calendar                   |
+| `gday --help`    | Show help and usage examples                           |
 
 ## Configuration
 
@@ -117,11 +121,10 @@ filtered_appointments:
 
 Special thanks to the [gcalcli](https://github.com/insanum/gcalcli) project by Eric Davis and contributors. gday-cli is built on top of gcalcli's excellent Google Calendar integration, which handles all the heavy lifting for OAuth authentication and calendar data fetching.
 
-## Requirements
-- macOS (tested on macOS 14+)
-- `gcalcli` (Google Calendar CLI)
-- `zsh` or `bash` shell
-- Google Calendar API access
+## 🍅 Pomodoro
+
+I kinda cheated: having `gday` create pomodoros on its own ended up being tricky, so I just created a new gCal calendar called "Pomodoro" with an "🍅" appointment every 30m. I import that cal to get the Pomodoro lines on my schedule.
+
 
 ## Troubleshooting
 

@@ -1,0 +1,208 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Discovery Works//gday-cli//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Ferris Bueller's Day Off
+X-WR-TIMEZONE:America/Chicago
+X-WR-CALDESC:The legendary day off from the 1986 movie - perfect for demonstrating gday-cli!
+
+BEGIN:VTIMEZONE
+TZID:America/Chicago
+BEGIN:DAYLIGHT
+TZOFFSETFROM:-0600
+TZOFFSETTO:-0500
+TZNAME:CDT
+DTSTART:19860427T020000
+RRULE:FREQ=YEARLY;BYMONTH=4;BYDAY=-1SU
+END:DAYLIGHT
+BEGIN:STANDARD
+TZOFFSETFROM:-0500
+TZOFFSETTO:-0600
+TZNAME:CST
+DTSTART:19861026T020000
+RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU
+END:STANDARD
+END:VTIMEZONE
+
+BEGIN:VEVENT
+DTSTART;TZID=America/Chicago:19860605T070000
+DTEND;TZID=America/Chicago:19860605T073000
+SUMMARY:🤒 Fake being sick to parents
+DESCRIPTION:Convince parents I'm too sick for school. "Life moves pretty fast..."
+LOCATION:Bueller House, Shermer IL
+UID:ferris-sick-001@example.com
+DTSTAMP:20250123T000000Z
+END:VEVENT
+
+BEGIN:VEVENT
+DTSTART;TZID=America/Chicago:19860605T073000
+DTEND;TZID=America/Chicago:19860605T080000
+SUMMARY:🚿 Shower & set up sick day contraptions
+DESCRIPTION:Set up the dummy in bed and doorbell recording system
+LOCATION:Bueller House, Shermer IL
+UID:ferris-setup-002@example.com
+DTSTAMP:20250123T000000Z
+END:VEVENT
+
+BEGIN:VEVENT
+DTSTART;TZID=America/Chicago:19860605T080000
+DTEND;TZID=America/Chicago:19860605T090000
+SUMMARY:☎️ Convince Cameron to skip school
+DESCRIPTION:"Cameron, this is my ninth sick day this semester. If I go for ten, I'm going to have to barf up a lung."
+LOCATION:Phone call to Cameron Frye
+UID:ferris-cameron-003@example.com
+DTSTAMP:20250123T000000Z
+END:VEVENT
+
+BEGIN:VEVENT
+DTSTART;TZID=America/Chicago:19860605T090000
+DTEND;TZID=America/Chicago:19860605T093000
+SUMMARY:📞 Call in fake grandmother death for Sloane
+DESCRIPTION:Pose as her father to get Sloane out of school with tragic news
+LOCATION:Bueller House, Shermer IL
+UID:ferris-sloane-004@example.com
+DTSTAMP:20250123T000000Z
+END:VEVENT
+
+BEGIN:VEVENT
+DTSTART;TZID=America/Chicago:19860605T093000
+DTEND;TZID=America/Chicago:19860605T103000
+SUMMARY:🏎️ "Borrow" Cameron's dad's Ferrari 250 GT
+DESCRIPTION:The 1961 Ferrari 250 GT California - fewer than 100 were made!
+LOCATION:Frye House, Shermer IL
+UID:ferris-ferrari-005@example.com
+DTSTAMP:20250123T000000Z
+END:VEVENT
+
+BEGIN:VEVENT
+DTSTART;TZID=America/Chicago:19860605T103000
+DTEND;TZID=America/Chicago:19860605T110000
+SUMMARY:🏫 Pick up Sloane from school
+DESCRIPTION:Rescue grieving Sloane Peterson from school
+LOCATION:Shermer High School, Shermer IL
+UID:ferris-pickup-006@example.com
+DTSTAMP:20250123T000000Z
+END:VEVENT
+
+BEGIN:VEVENT
+DTSTART;TZID=America/Chicago:19860605T110000
+DTEND;TZID=America/Chicago:19860605T114500
+SUMMARY:🚗 Drive from Shermer to Chicago
+DESCRIPTION:Cruising to the city in style - "It is so choice!"
+LOCATION:En route to Chicago
+UID:ferris-drive-007@example.com
+DTSTAMP:20250123T000000Z
+END:VEVENT
+
+BEGIN:VEVENT
+DTSTART;TZID=America/Chicago:19860605T114500
+DTEND;TZID=America/Chicago:19860605T123000
+SUMMARY:🏢 Sears Tower & Chicago Board of Trade
+DESCRIPTION:Tourist stops and leaving the Ferrari with sketchy parking attendants
+LOCATION:Downtown Chicago
+UID:ferris-sightseeing-008@example.com
+DTSTAMP:20250123T000000Z
+END:VEVENT
+
+BEGIN:VEVENT
+DTSTART;TZID=America/Chicago:19860605T123000
+DTEND;TZID=America/Chicago:19860605T140000
+SUMMARY:🍽️ Lunch at Chez Quis (as Abe Froman)
+DESCRIPTION:Impersonate the Sausage King of Chicago for fancy lunch reservation
+LOCATION:Chez Quis Restaurant, Chicago
+UID:ferris-lunch-009@example.com
+DTSTAMP:20250123T000000Z
+END:VEVENT
+
+BEGIN:VEVENT
+DTSTART;TZID=America/Chicago:19860605T140000
+DTEND;TZID=America/Chicago:19860605T153000
+SUMMARY:🎨 Art Institute of Chicago
+DESCRIPTION:Cameron stares at Seurat's "A Sunday on La Grande Jatte"
+LOCATION:Art Institute of Chicago
+UID:ferris-art-010@example.com
+DTSTAMP:20250123T000000Z
+END:VEVENT
+
+BEGIN:VEVENT
+DTSTART;TZID=America/Chicago:19860605T153000
+DTEND;TZID=America/Chicago:19860605T163000
+SUMMARY:⚾ Chicago Cubs game at Wrigley Field
+DESCRIPTION:Catch a foul ball and sing "Take Me Out to the Ball Game"
+LOCATION:Wrigley Field, Chicago
+UID:ferris-cubs-011@example.com
+DTSTAMP:20250123T000000Z
+END:VEVENT
+
+BEGIN:VEVENT
+DTSTART;TZID=America/Chicago:19860605T163000
+DTEND;TZID=America/Chicago:19860605T173000
+SUMMARY:🎺 Von Steuben Day Parade (Twist and Shout!)
+DESCRIPTION:Commandeer parade float and perform "Danke Schoen" and "Twist and Shout"
+LOCATION:Downtown Chicago Parade Route
+UID:ferris-parade-012@example.com
+DTSTAMP:20250123T000000Z
+END:VEVENT
+
+BEGIN:VEVENT
+DTSTART;TZID=America/Chicago:19860605T173000
+DTEND;TZID=America/Chicago:19860605T174500
+SUMMARY:😰 Cameron's catatonic episode
+DESCRIPTION:Cameron discovers 175+ miles on the Ferrari odometer
+LOCATION:Parking Garage, Chicago
+UID:ferris-cameron-catatonic-013@example.com
+DTSTAMP:20250123T000000Z
+END:VEVENT
+
+BEGIN:VEVENT
+DTSTART;TZID=America/Chicago:19860605T174500
+DTEND;TZID=America/Chicago:19860605T180000
+SUMMARY:💥 Ferrari crashes through garage window
+DESCRIPTION:Attempting to reverse the odometer goes horribly wrong
+LOCATION:Frye House Garage, Shermer IL
+UID:ferris-ferrari-crash-014@example.com
+DTSTAMP:20250123T000000Z
+END:VEVENT
+
+BEGIN:VEVENT
+DTSTART;TZID=America/Chicago:19860605T180000
+DTEND;TZID=America/Chicago:19860605T183000
+SUMMARY:🏃‍♂️ Race home before parents return
+DESCRIPTION:Sprint through backyards to beat parents home at 6 sharp
+LOCATION:Shermer IL neighborhoods
+UID:ferris-race-home-015@example.com
+DTSTAMP:20250123T000000Z
+END:VEVENT
+
+BEGIN:VEVENT
+DTSTART;TZID=America/Chicago:19860605T183000
+DTEND;TZID=America/Chicago:19860605T184500
+SUMMARY:😈 Rooney encounter & Jeanie's rescue
+DESCRIPTION:Principal Rooney finally catches Ferris, but sister Jeanie saves the day
+LOCATION:Bueller House, Shermer IL
+UID:ferris-rooney-016@example.com
+DTSTAMP:20250123T000000Z
+END:VEVENT
+
+BEGIN:VEVENT
+DTSTART;TZID=America/Chicago:19860605T184500
+DTEND;TZID=America/Chicago:19860605T190000
+SUMMARY:🛏️ Back in bed - parents arrive home
+DESCRIPTION:"How's he feeling?" "He's fine." The perfect crime completed!
+LOCATION:Bueller House, Shermer IL
+UID:ferris-success-017@example.com
+DTSTAMP:20250123T000000Z
+END:VEVENT
+
+BEGIN:VEVENT
+DTSTART;TZID=America/Chicago:19860605T190000
+DTEND;TZID=America/Chicago:19860605T190100
+SUMMARY:🎬 End credits wisdom
+DESCRIPTION:"Life moves pretty fast. If you don't stop and look around once in a while, you could miss it."
+LOCATION:Bueller House, Shermer IL
+UID:ferris-credits-018@example.com
+DTSTAMP:20250123T000000Z
+END:VEVENT
+
+END:VCALENDAR
