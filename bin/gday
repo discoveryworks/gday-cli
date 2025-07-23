@@ -93,15 +93,54 @@ gday_show_help() {
   echo "  friday            Show most recent Friday's schedule"
   echo "  saturday          Show most recent Saturday's schedule"
   echo "  sunday            Show most recent Sunday's schedule"
+  echo "  YYYY-MM-DD        Show specific date (e.g., 1986-06-05)"
+  echo "  MM/DD/YYYY        Show specific date (e.g., 06/05/1986)"
+  echo "  \"Month DD, YYYY\"  Show specific date (e.g., \"June 5, 1986\")"
   echo ""
   echo "EXAMPLES:"
   echo "  gday              Show today's full schedule"
   echo "  gday yesterday    Show yesterday's schedule"
   echo "  gday friday       Show last Friday's schedule"
+  echo "  gday 1986-06-05   Show Ferris Bueller's legendary day"
+  echo "  gday \"June 5, 1986\" Same date with natural language"
   echo "  gday later        Show only appointments for later today"
   echo "  gday filtered     Show which appointments are filtered out"
   echo ""
   echo "VERSION: $GDAY_VERSION"
+}
+
+# Parse arbitrary date formats
+parse_arbitrary_date() {
+  local input_date="$1"
+  local parsed_date=""
+  
+  # Try different date formats
+  # ISO format: 1986-06-05
+  if [[ "$input_date" =~ ^[0-9]{4}-[0-9]{1,2}-[0-9]{1,2}$ ]]; then
+    parsed_date=$(date -j -f "%Y-%m-%d" "$input_date" "+%Y-%m-%d" 2>/dev/null)
+  # US format: 06/05/1986 or 6/5/1986
+  elif [[ "$input_date" =~ ^[0-9]{1,2}/[0-9]{1,2}/[0-9]{4}$ ]]; then
+    parsed_date=$(date -j -f "%m/%d/%Y" "$input_date" "+%Y-%m-%d" 2>/dev/null)
+  # Alternative US format: 1986/06/05
+  elif [[ "$input_date" =~ ^[0-9]{4}/[0-9]{1,2}/[0-9]{1,2}$ ]]; then
+    parsed_date=$(date -j -f "%Y/%m/%d" "$input_date" "+%Y-%m-%d" 2>/dev/null)
+  # Try parsing with date command (handles "June 5, 1986", etc.)
+  else
+    parsed_date=$(date -j -f "%B %d, %Y" "$input_date" "+%Y-%m-%d" 2>/dev/null)
+    if [[ -z "$parsed_date" ]]; then
+      parsed_date=$(date -j -f "%b %d, %Y" "$input_date" "+%Y-%m-%d" 2>/dev/null)
+    fi
+  fi
+  
+  # If we successfully parsed the date, set the global variables
+  if [[ -n "$parsed_date" ]]; then
+    date_arg="$parsed_date"
+    display_date=$(date -j -f "%Y-%m-%d" "$parsed_date" "+%m/%d - %A" 2>/dev/null)
+    week_number=$(date -j -f "%Y-%m-%d" "$parsed_date" "+%V" 2>/dev/null)
+    return 0
+  else
+    return 1
+  fi
 }
 
 # Process command line arguments and determine date
@@ -153,9 +192,16 @@ process_date_args() {
       fi
       ;;
     *)
-      date_arg="today"
-      display_date=$(date "+%m/%d - %A")
-      week_number=$(date "+%V")
+      # Try to parse as an arbitrary date
+      if [[ -n "$1" ]] && parse_arbitrary_date "$1"; then
+        # Date was successfully parsed, variables set by parse_arbitrary_date
+        return 0
+      else
+        # Default to today
+        date_arg="today"
+        display_date=$(date "+%m/%d - %A")
+        week_number=$(date "+%V")
+      fi
       ;;
   esac
 }
