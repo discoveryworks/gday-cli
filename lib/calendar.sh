@@ -149,10 +149,10 @@ gday_process_calendar_data() {
     fi
   done <<< "$calendar_data"
 
-  # Filter out any "Length:" entries from all-day events
+  # Filter out any "Length:" entries and empty all-day events
   local filtered_all_day_events=()
   for event in "${all_day_events[@]}"; do
-    if [[ ! $event =~ Length: ]]; then
+    if [[ ! $event =~ Length: ]] && [[ "$event" != "all-day|📅  (All-day)" ]] && [[ "$event" != *"📅 ~~~"* ]]; then
       filtered_all_day_events+=("$event")
     fi
   done

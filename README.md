@@ -23,8 +23,8 @@ gday-cli fetches the day's events from gCal and renders them as a markdown table
 <td width="50%">
 
 **From this (Google Calendar)**
-![Appointments as gCal via the web UI.](gcal_ux.png)
-
+<!-- ![Appointments as gCal via the web UI.](gcal_ux.png) -->
+![](2025-07-23-16-20-36.png)
 </td>
 <td width="50%">
 
