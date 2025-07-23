@@ -9,43 +9,43 @@ GCAL_CALENDARS=()
 # Load configuration from YAML file
 gday_load_config() {
   local config_file="$HOME/.config/gday/config.yml"
-  
+
   if [[ ! -f "$config_file" ]]; then
     echo "Warning: gday configuration file not found at $config_file"
     echo "Create ~/.config/gday/config.yml using the example template"
     return 1
   fi
-  
+
   # Parse calendar names from YAML
   GCAL_CALENDARS=()
   local in_calendars=false
-  
+
   while IFS= read -r line; do
     # Check for calendars section
     if [[ "$line" =~ ^calendars: ]]; then
       in_calendars=true
       continue
     fi
-    
+
     # Stop parsing calendars when we hit a new section
     if [[ "$line" =~ ^[[:alpha:]]+: ]] && [[ $in_calendars == true ]]; then
       break
     fi
-    
+
     # Parse calendar list items
     if [[ $in_calendars == true && "$line" =~ ^[[:space:]]*-[[:space:]]*(.*) ]]; then
       local calendar=$(echo "$line" | sed 's/^[[:space:]]*-[[:space:]]*//' | sed 's/^"//' | sed 's/"$//')
       GCAL_CALENDARS+=("$calendar")
     fi
   done < "$config_file"
-  
+
   return 0
 }
 
 # Parse YAML prompt configuration
 gday_parse_prompts() {
   local config_file="$HOME/.config/gday/config.yml"
-  
+
   # Initialize associative arrays
   declare -A prompt_groups_freq
   declare -A prompt_groups_content
@@ -53,19 +53,19 @@ gday_parse_prompts() {
   local current_frequency=""
   local in_content=false
   local in_prompts=false
-  
+
   while IFS= read -r line; do
     # Check for prompts section start
     if [[ "$line" =~ ^prompts: ]]; then
       in_prompts=true
       continue
     fi
-    
+
     # Stop parsing when we hit a non-prompts section
     if [[ "$line" =~ ^[[:alpha:]_]+: ]] && [[ $in_prompts == true ]] && [[ ! "$line" =~ ^[[:space:]] ]]; then
       break
     fi
-    
+
     if [[ $in_prompts == true ]]; then
       if [[ "$line" =~ ^[[:space:]]*-[[:space:]]*name:[[:space:]]*\"(.*)\" ]]; then
         # Start of new prompt group
@@ -93,7 +93,7 @@ gday_parse_prompts() {
       fi
     fi
   done < "$config_file"
-  
+
   # Export arrays for use by main script
   for group in "${!prompt_groups_freq[@]}"; do
     echo "PROMPT_FREQ_${group//[^a-zA-Z0-9]/_}=${prompt_groups_freq[$group]}"
@@ -106,7 +106,7 @@ gday_parse_filtered_appointments() {
   local config_file="$HOME/.config/gday/config.yml"
   local -a filtered_appointments_array
   local in_filtered_appointments=false
-  
+
   while IFS= read -r line; do
     if [[ "$line" =~ ^filtered_appointments: ]]; then
       in_filtered_appointments=true
@@ -119,7 +119,7 @@ gday_parse_filtered_appointments() {
       break
     fi
   done < "$config_file"
-  
+
   # Join with pipe delimiter for awk processing
   local filtered_appointments_joined=""
   for appt in "${filtered_appointments_array[@]}"; do
@@ -129,7 +129,7 @@ gday_parse_filtered_appointments() {
       filtered_appointments_joined="$filtered_appointments_joined|$appt"
     fi
   done
-  
+
   echo "$filtered_appointments_joined"
 }
 
