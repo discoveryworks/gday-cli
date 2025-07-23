@@ -113,6 +113,10 @@ filtered_appointments:
 🌞🌞🌞🌞🌞 Extras
 =============================
 
+## Acknowledgments
+
+Special thanks to the [gcalcli](https://github.com/insanum/gcalcli) project by Eric Davis and contributors. gday-cli is built on top of gcalcli's excellent Google Calendar integration, which handles all the heavy lifting for OAuth authentication and calendar data fetching.
+
 ## Requirements
 - macOS (tested on macOS 14+)
 - `gcalcli` (Google Calendar CLI)
