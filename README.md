@@ -1,18 +1,31 @@
-# gday-cli
+🌞 Why did we build gday?
+=============================
 
-Personal calendar and task management CLI tool that integrates Google Calendar with daily productivity workflows.
+My calendar is a canonical source of truth for commitments of my time. But I live and breathe markdown. So gday pulls my calendar into markdown, breaks the day into pomodoro-sized chunks, and adds a little structure to my morning deck-clearing and day-planning.
+
+🌞🌞 Who's it for?
+=============================
+
+Me! But maybe you too if you're brain is similarly shaped: terminal-first developers, productivity enthusiasts, and anyone who manages multiple Google Calendars while preferring command-line interfaces over GUI applications. Perfect for those who want calendar integration without leaving their development environment.
+
+
+🌞🌞🌞 What does it do?
+=============================
+gday-cli fetches the day'sevents from gCal and renders them as a markdown table, as well as emiting a few configurable productivity prompts.
+
+
+🌞🌞🌞🌞 How do I use it?
+=============================
 
 ## Installation
 
 ### Homebrew (Recommended)
-
 ```bash
 brew tap jpb/gday-cli
 brew install gday
 ```
 
 ### Manual Installation
-
 ```bash
 git clone https://github.com/jpb/gday-cli.git
 cd gday-cli
@@ -42,7 +55,7 @@ sudo ln -sf $PWD/bin/gday /usr/local/bin/gday
 4. **Run gday:**
    ```bash
    gday              # Show today's schedule
-   gday yesterday    # Show yesterday's schedule  
+   gday yesterday    # Show yesterday's schedule
    gday later        # Show only "Later Today" section
    gday --help       # Show all commands
    ```
@@ -67,7 +80,7 @@ Edit `~/.config/gday/config.yml`:
 # Calendar Configuration
 calendars:
   - "Work Calendar"
-  - "Personal"  
+  - "Personal"
   - "Appointments"
 
 # Prompt Groups with Rotation
@@ -77,8 +90,8 @@ prompts:
     content:
       - "## What's top of mind today?"
       - "## What did you accomplish yesterday?"
-  
-  - name: "Weekly Planning" 
+
+  - name: "Weekly Planning"
     frequency: rotating(2)  # Show 2 items, rotate through all
     content:
       - "## What are your 3 priorities this week?"
@@ -92,17 +105,11 @@ filtered_appointments:
   - "Personal Time"
 ```
 
-## Features
 
-- **Smart Calendar Integration**: Fetches events from multiple Google Calendars
-- **Configurable Prompts**: YAML-based prompt system with daily/rotating/random frequencies
-- **Time Block Formatting**: Automatic 30-minute time blocks with emoji indicators
-- **Filtered Views**: Exclude routine appointments from planning sections
-- **Multi-day Support**: View any recent day's schedule
-- **CLI-Native**: Designed for terminal-based workflows
+🌞🌞🌞🌞🌞 Extras
+=============================
 
 ## Requirements
-
 - macOS (tested on macOS 14+)
 - `gcalcli` (Google Calendar CLI)
 - `zsh` or `bash` shell
@@ -122,17 +129,3 @@ filtered_appointments:
 **Missing dependencies:**
 - Install gcalcli: `pip install gcalcli`
 - On first run: `gcalcli init` to set up OAuth
-
-## Contributing
-
-This tool was extracted from a personal dotfiles repository. It's designed for individual productivity workflows but welcomes contributions for broader use cases.
-
-## License
-
-MIT License - see LICENSE file for details.
-
----
-
-**Version:** 3.10.0  
-**Author:** JPB  
-**Repository:** https://github.com/jpb/gday-cli
