@@ -18,11 +18,22 @@ But maybe you too if you're brain is similarly shaped: terminal-first developers
 =============================
 gday-cli fetches the day's events from gCal and renders them as a markdown table, (as well as emitting a few configurable productivity prompts). Tailor it to your own morning routine.
 
-#### From this (Google Calendar)
+<table>
+<tr>
+<td width="50%">
+
+**From this (Google Calendar)**
 ![Appointments as gCal via the web UI.](gcal_ux.png)
 
-#### To this (gday output)
+</td>
+<td width="50%">
+
+**To this (gday output)**
 ![Appointments as markdown table.](markdown_table_ux.png)
+
+</td>
+</tr>
+</table>
 
 🌞🌞🌞🌞 How do I use it?
 =============================
