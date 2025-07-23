@@ -202,10 +202,14 @@ gday_validate_calendars() {
     printf "   - %s\n" "${missing_calendars[@]}"
     if [[ $found -eq 0 ]]; then
       echo "❌ No configured calendars were found. Exiting."
+      echo ""
       return 1
     fi
   else
     echo "✅ All configured calendars found!"
+    echo ""
+    echo "-------------------------------------"
+    echo ""
   fi
   return 0
 }
