@@ -23,14 +23,6 @@ gday-cli fetches the day's events from gCal and renders them as a markdown table
 =============================
 
 ## Installation
-
-### Homebrew (Recommended)
-```bash
-brew tap jpb/gday-cli
-brew install gday
-```
-
-### Manual Installation
 ```bash
 git clone https://github.com/discoveryworks/gday-cli.git
 cd gday-cli
