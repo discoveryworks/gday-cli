@@ -67,6 +67,50 @@ gday_process_calendar_data() {
 
     # Check if this line has our target date format (e.g., "Wed May 07")
     if [[ $line == "$target_day $target_month $target_date"* || $line == *"$target_month $target_date"* ]]; then
+      # Check if this date line also contains a time-based event (first event of the day)
+      if [[ $line =~ ^[A-Za-z]{3}\ [A-Za-z]{3}\ [0-9]{2}[[:space:]]+([0-9]{1,2}:[0-9]{2}[apm]{2})[[:space:]]+(.*) ]]; then
+        local time="${BASH_REMATCH[1]}"
+        local item="${BASH_REMATCH[2]}"
+        local original_time=$time
+        
+        # Get the next line for duration info
+        IFS= read -r next_line
+        local duration_raw=$(echo "$next_line" | awk '/Length:/ {print $2}')
+        local hours=$(echo "$duration_raw" | cut -d ':' -f 1)
+        local minutes=$(echo "$duration_raw" | cut -d ':' -f 2)
+        local total_minutes=$((hours * 60 + minutes))
+        
+        # Process this embedded event the same way as other timed events
+        if [[ $total_minutes -eq 1440 || ($time == "12:00am" && $total_minutes -gt 720) ]]; then
+          if [[ ! $item =~ ^Length: ]]; then
+            all_day_events+=("all-day|📅 $item (All-day)")
+          fi
+        elif [[ $total_minutes -eq 15 ]]; then
+          # For 15-minute appointments, snap to 30-minute boundaries
+          if [[ $time =~ :15([ap]m) ]]; then
+            time=$(echo "$time" | sed 's/:15/:00/')
+            item="$item - $original_time"
+          elif [[ $time =~ :45([ap]m) ]]; then
+            time=$(echo "$time" | sed 's/:45/:30/')
+            item="$item - $original_time"
+          fi
+          lines+=("$time|$item")
+        else
+          # For longer events, split into 30-minute blocks
+          local blocks=$((total_minutes / 30))
+          if [[ $blocks -eq 0 ]]; then
+            blocks=1
+          fi
+          
+          for ((i=0; i<blocks; i++)); do
+            lines+=("$time|$item")
+            if [[ $i -lt $((blocks - 1)) ]]; then
+              time=$(add_pomodoro "$time")
+            fi
+          done
+        fi
+      fi
+      
       # Keep reading subsequent lines until we find a time-based event
       while IFS= read -r next_line; do
         next_line=$(echo "$next_line" | sed 's/^[ \t]*//') # trim whitespace
