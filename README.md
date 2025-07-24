@@ -1,42 +1,36 @@
-🌞 Why did we build gday?
+🌞 Why did we build `gday`?
 =============================
 
-My calendar is a canonical source of truth for commitments of my time. But I live and breathe markdown. So gday
-- pulls my calendar into markdown,
-- breaks the day into pomodoro-sized chunks, and
-- adds a little structure to my morning deck-clearing and day-planning.
+My calendar is a canonical source of truth for commitments of my time. But I live and breathe markdown. I wanted to sit down in the morning, type a few chars into my terminal, and get my day started. That's `gday`.
 
 🌞🌞 Who's it for?
 =============================
 
 Me!
 
-But maybe you too if you're brain is similarly shaped: terminal-first developers, productivity enthusiasts, and anyone who manages multiple Google Calendars while preferring command-line interfaces over GUI applications. Perfect for those who want calendar integration without leaving their development environment.
+But maybe you too if you're brain is similarly shaped: terminal-first developers, productivity enthusiasts, and anyone who manages multiple Google Calendars while preferring command-line interfaces over GUI applications. Perfect for those who live and breathe markdown.
 
 
 🌞🌞🌞 What does it do?
 =============================
-gday-cli fetches the day's events from gCal and renders them as a markdown table, (as well as emitting a few configurable productivity prompts). Tailor it to your own morning routine.
 
-<table>
-<tr>
-<td width="50%">
+- _Extract_ the day's schedule from Google Calendar,
+- _Transform_ it into a markdown table, in pomodoro-sized chunks,
+- _Load_ it into my daily journal (along w/ a few custom prompts)
 
-**From this (Google Calendar)**
-<!-- ![Appointments as gCal via the web UI.](gcal_ux.png) -->
-![](2025-07-23-16-20-36.png)
-</td>
-<td width="50%">
 
-**To this (gday output)**
-![Appointments as markdown table.](markdown_table_ux.png)
+| Go from this (Google Calendar)...                    | ...to this (gday output)                                  |
+|------------------------------------------------------|-----------------------------------------------------------|
+| ![Appointments as gCal via the web UI.](gcal_ux.png) | ![Appointments as markdown table.](markdown_table_ux.png) |
 
-</td>
-</tr>
-</table>
 
 🌞🌞🌞🌞 How do I use it?
 =============================
+
+- set it up (below)
+- Each morning, type `gday` when you sit down at yr desk
+- paste into yr Obsidian or Roam or whatever daily journal you use
+- manually munge the rough patches and familiarize yrself with your day.
 
 ## Installation
 ```bash
@@ -80,7 +74,7 @@ sudo ln -sf $PWD/bin/gday /usr/local/bin/gday
    gday --help       # Show all commands
    ```
 
-## Commands
+## Selected Commands
 
 | Command          | Description                                            |
 |------------------|--------------------------------------------------------|
@@ -135,8 +129,9 @@ Special thanks to the [gcalcli](https://github.com/insanum/gcalcli) project by E
 
 ## 🍅 Pomodoro
 
-I kinda cheated: having `gday` create pomodoros on its own ended up being tricky, so I just created a new gCal calendar called "Pomodoro" with an "🍅" appointment every 30m. I import that cal to get the Pomodoro lines on my schedule.
+I kinda cheated: having `gday` create [pomodoros](https://en.wikipedia.org/wiki/Pomodoro_Technique) on its own ended up being tricky, so I just created a new [gCal calendar called "Pomodoro" with an "🍅" appointment every 30m](./pomodoro_calandar.ics). I import that cal to get the Pomodoro lines on my schedule.
 
+## Example
 
 ## Troubleshooting
 

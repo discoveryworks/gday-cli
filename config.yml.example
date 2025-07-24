@@ -1,7 +1,7 @@
 # gday configuration
 # Copy to ~/.config/gday/config.yml and customize
 
-# Calendar names (must match your Google Calendar names exactly)
+# Calendar names (must match your Google Calendar names exactly. Use `gcalcli list` for exact names.)
 calendars:
   - "Personal"
   - "Work" 
@@ -12,8 +12,8 @@ calendars:
 prompts:
   - name: "Daily Reflection"
     frequency: daily  # Show every day
+      - "## 💭 What's on your mind right now?"
     content:
-      - "## 🧞‍♂️ What is top-of-mind today? What do you want right now?"
 
   - name: "Weekly Areas of Focus"
     frequency: random(3)  # Show 3 random prompts each day
@@ -33,6 +33,7 @@ prompts:
       - "## 🧞‍♂️ What's top-of-mind for your partner?"
       - "## 🧞‍♂️ What's top-of-mind for your kids?"
       - "## 🧞‍♂️ What's top-of-mind for extended family?"
+      - "## 🧞‍♂️ What`s top-of-mind for you today?"
 
   - name: "Daily Review"
     frequency: daily
@@ -40,7 +41,6 @@ prompts:
       - "## 🥄 What did you spend energy on yesterday?"
       - "## 🚢 What did you ship yesterday?"
       - "## 🃏 What wildcards are in play today?"
-      - "## 💭 What's on your mind right now?"
 
 # Appointments to exclude from "Later Today" section
 # These will appear in main schedule but not in the filtered "Later Today" view
