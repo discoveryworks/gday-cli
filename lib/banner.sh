@@ -8,7 +8,7 @@ gday_show_banner() {
   # Use semantic versioning: major.minor.patch
   local GDAY_BANNER="
     🌞🌞🌞🌞🌞🌞🌞🌞🌞🌞🌞🌞🌞🌞🌞🌞🌞🌞🌞
-    🌞🌞🌞    gday Version $GDAY_VERSION   🌞🌞🌞
+    🌞🌞🌞    gday Version $GDAY_VERSION    🌞🌞🌞
     🌞🌞🌞🌞🌞🌞🌞🌞🌞🌞🌞🌞🌞🌞🌞🌞🌞🌞🌞
 
 

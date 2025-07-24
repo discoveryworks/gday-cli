@@ -1,10 +1,10 @@
 class Gday < Formula
   desc "Personal calendar and task management CLI that integrates Google Calendar with daily workflows"
   homepage "https://github.com/discoveryworks/gday-cli"
-  url "https://github.com/discoveryworks/gday-cli/archive/v3.11.0.tar.gz"
-  sha256 "" # Will be filled when we create actual release
+  url "https://github.com/discoveryworks/gday-cli/archive/v1.0.0.tar.gz"
+  sha256 "ba8bad6e211d5d9a93db9b577a29669746de1966b7f30490a30b7426cf76ea32"
   license "MIT"
-  version "3.11.0"
+  version "1.0.0"
 
   depends_on "python3"
   
@@ -14,17 +14,6 @@ class Gday < Formula
     lib.install Dir["lib/*"]
     doc.install "README.md"
     (etc/"gday").install "config.yml.example"
-    
-    # Create a wrapper script that ensures the lib directory is found
-    (bin/"gday").unlink
-    (bin/"gday").write <<~EOS
-      #!/bin/bash
-      export GDAY_LIB_DIR="#{lib}"
-      exec "#{libexec}/gday" "$@"
-    EOS
-    
-    libexec.install "bin/gday"
-    chmod 0755, bin/"gday"
   end
 
   def post_install
@@ -45,6 +34,6 @@ class Gday < Formula
   test do
     # Test that the binary exists and shows help
     assert_match "gday - Personal calendar and task management tool", shell_output("#{bin}/gday --help")
-    assert_match "VERSION: 3.11.0", shell_output("#{bin}/gday --help")
+    assert_match "VERSION: 1.0.0", shell_output("#{bin}/gday --help")
   end
 end

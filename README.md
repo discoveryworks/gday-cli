@@ -14,6 +14,8 @@ But maybe you too if you're brain is similarly shaped: terminal-first developers
 🌞🌞🌞 What does it do?
 =============================
 
+It turns today's gCal appointments into a markdown table, in pomodoro-sized chunks.
+
 - _Extract_ the day's schedule from Google Calendar,
 - _Transform_ it into a markdown table, in pomodoro-sized chunks,
 - _Load_ it into my daily journal (along w/ a few custom prompts)
@@ -33,6 +35,12 @@ But maybe you too if you're brain is similarly shaped: terminal-first developers
 - manually munge the rough patches and familiarize yrself with your day.
 
 ## Installation
+
+### Via Homebrew
+
+- `brew install discoveryworks/gday-cli/gday`
+
+### Manual Installation
 ```bash
 git clone https://github.com/discoveryworks/gday-cli.git
 cd gday-cli
