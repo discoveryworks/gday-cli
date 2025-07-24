@@ -168,3 +168,20 @@ I kinda cheated: having `gday` create [pomodoros](https://en.wikipedia.org/wiki/
 - Install gcalcli: `pip install gcalcli`
 - On first run: `gcalcli init` to set up OAuth
 - Ensure you have Python 3.x installed
+
+## Testing Installation
+
+For maintainers and contributors testing installation methods:
+
+```bash
+# Test Homebrew installation in clean Docker environment
+./test-installation.sh homebrew
+
+# Test npm installation (when available)
+./test-installation.sh npm
+
+# Test all installation methods
+./test-installation.sh all
+```
+
+This ensures installations work correctly without interference from development environments. Requires Docker to be running.
