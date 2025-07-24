@@ -82,6 +82,16 @@ generate_repeated_emoji() {
   fi
 }
 
+# Calculate visual display width of text (accounting for emoji width)
+get_visual_width() {
+  local text="$1"
+  local char_count=${#text}
+  local emoji_count=$(echo "$text" | grep -o '[^[:alnum:][:space:][:punct:]]' | wc -l | tr -d ' ')
+  # Each emoji takes approximately 2 character widths in most terminals
+  # So total visual width = regular chars + (emoji_count * extra_width)
+  echo $((char_count + emoji_count))
+}
+
 # Function to add a pomodoro (30 minutes) to a given time
 add_pomodoro() {
   local time=$1
@@ -268,15 +278,24 @@ gday_process_calendar_data() {
       fi
     fi
 
-    # Format time with consistent spacing
-    local formatted_time="${time}       "
+    # Format time with consistent spacing (8 characters)
+    local formatted_time="${time}        "
     formatted_time="${formatted_time:0:8}"
 
-    # Pad item with spaces for consistent column width
-    local formatted_item="${item}                                                                                            "
-    formatted_item="${formatted_item:0:88}"
-
-    body="${body}| ${formatted_time} | ${formatted_item} |"$'\n'
+    # Calculate how much padding needed for right alignment
+    local target_width=86  # Target visual width for item column
+    local item_visual_width=$(get_visual_width "$item")
+    local padding_needed=$((target_width - item_visual_width))
+    
+    # Ensure minimum padding of 0
+    if [[ $padding_needed -lt 0 ]]; then
+      padding_needed=0
+    fi
+    
+    # Create padding string
+    local padding=$(printf "%*s" "$padding_needed" "")
+    
+    body="${body}| ${formatted_time} | ${item}${padding} |"$'\n'
   done
 
   echo "$body"
