@@ -35,6 +35,53 @@ get_emoji_for_time() {
   esac
 }
 
+# Extract the first emoji from a string
+get_first_emoji() {
+  local text="$1"
+  local first_char="${text:0:1}"
+  # Check if first character is non-alphanumeric and not space (likely an emoji)
+  if [[ ! $first_char =~ [[:alnum:][:space:]] ]] && [[ -n "$first_char" ]]; then
+    echo "$first_char"
+  fi
+}
+
+# Generate repeated emoji for time blocks
+generate_repeated_emoji() {
+  local original_item="$1"
+  local block_number="$2"  # 0-based index
+  local time_number="$3"
+  
+  # Get the first emoji from the original item
+  local leading_emoji=$(get_first_emoji "$original_item")
+  
+  # If no leading emoji found, use time-based clock emoji
+  if [[ -z "$leading_emoji" ]]; then
+    leading_emoji=$(get_emoji_for_time "$time_number")
+  fi
+  
+  # If we still have no emoji, return original item
+  if [[ -z "$leading_emoji" ]]; then
+    echo "$original_item"
+    return
+  fi
+  
+  # Generate repeated emoji (block_number + 1 times)
+  local repeated_emoji=""
+  for ((i=0; i<=block_number; i++)); do
+    repeated_emoji="${repeated_emoji}${leading_emoji}"
+  done
+  
+  # If original item had a leading emoji, replace it; otherwise prepend
+  if [[ -n $(get_first_emoji "$original_item") ]]; then
+    # Remove the first character (emoji) and prepend our repeated version
+    local item_without_emoji="${original_item:1}"
+    echo "${repeated_emoji}${item_without_emoji}"
+  else
+    # No leading emoji, so prepend our repeated emoji
+    echo "${repeated_emoji} $original_item"
+  fi
+}
+
 # Function to add a pomodoro (30 minutes) to a given time
 add_pomodoro() {
   local time=$1
@@ -103,7 +150,9 @@ gday_process_calendar_data() {
           fi
           
           for ((i=0; i<blocks; i++)); do
-            lines+=("$time|$item")
+            local time_number=$(echo "$time" | tr -d '[:alpha:]' | tr -d ':')
+            local padded_item=$(generate_repeated_emoji "$item" "$i" "$time_number")
+            lines+=("$time|$padded_item")
             if [[ $i -lt $((blocks - 1)) ]]; then
               time=$(add_pomodoro "$time")
             fi
@@ -182,8 +231,10 @@ gday_process_calendar_data() {
         fi
 
         for ((i=0; i<blocks; i++)); do
-          new_line="$time|$item"
-          if [[ "$item" != "🍅" || "$time" != "$prev_time" ]]; then
+          local time_number=$(echo "$time" | tr -d '[:alpha:]' | tr -d ':')
+          local padded_item=$(generate_repeated_emoji "$item" "$i" "$time_number")
+          new_line="$time|$padded_item"
+          if [[ "$padded_item" != "🍅" || "$time" != "$prev_time" ]]; then
             lines+=("$new_line")
           fi
           prev_time="$time"
@@ -209,6 +260,7 @@ gday_process_calendar_data() {
     IFS='|' read -r time item <<< "$line"
     local time_number=$(echo "$time" | tr -d '[:alpha:]' | tr -d ':')
 
+    # Only add clock emoji if item doesn't start with any emoji at all
     if ! [[ $item =~ ^[^[:alnum:]] ]]; then # if item lacks emoji
       local emoji=$(get_emoji_for_time "$time_number") # then add emoji
       if [[ -n "$emoji" ]]; then
