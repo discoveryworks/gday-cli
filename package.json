@@ -7,7 +7,7 @@
     "gday": "./bin/gday"
   },
   "scripts": {
-    "test": "bash -c './bin/gday --help | grep -q \"VERSION: 3.11.0\"'",
+    "test": "bash -c 'source lib/version.sh && ./bin/gday --help | grep -q \"VERSION: $GDAY_VERSION\"'",
     "screenshot": "node screenshot-generator.js"
   },
   "devDependencies": {
@@ -15,7 +15,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jpb/gday-cli.git"
+    "url": "git+https://github.com/discoveryworks/gday-cli.git"
   },
   "keywords": [
     "calendar",
@@ -28,9 +28,9 @@
   "author": "JPB",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/jpb/gday-cli/issues"
+    "url": "https://github.com/discoveryworks/gday-cli/issues"
   },
-  "homepage": "https://github.com/jpb/gday-cli#readme",
+  "homepage": "https://github.com/discoveryworks/gday-cli#readme",
   "engines": {
     "node": ">=14"
   },
