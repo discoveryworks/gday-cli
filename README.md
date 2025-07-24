@@ -140,6 +140,11 @@ Special thanks to the [gcalcli](https://github.com/insanum/gcalcli) project by E
 I kinda cheated: having `gday` create [pomodoros](https://en.wikipedia.org/wiki/Pomodoro_Technique) on its own ended up being tricky, so I just created a new [gCal calendar called "Pomodoro" with an "🍅" appointment every 30m](./pomodoro_calandar.ics). I import that cal to get the Pomodoro lines on my schedule.
 
 ## Example
+- Take a look at the [sample notes file](./bueller_notes-1986-06.md) to see how this might be used. We assume
+  - a file for each month,
+  - an `h1` for each day,
+  - an `h2` for each meeting/event, and
+  - `h3`s for topics within the meeting.
 
 ## Troubleshooting
 
