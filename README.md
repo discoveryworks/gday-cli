@@ -38,7 +38,9 @@ It turns today's gCal appointments into a markdown table, in pomodoro-sized chun
 
 ### Via Homebrew
 
-- `brew install discoveryworks/gday-cli/gday`
+```shell
+brew install discoveryworks/gday-cli/gday
+```
 
 ### Manual Installation
 ```bash
