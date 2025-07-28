@@ -81,11 +81,12 @@ gday_show_help() {
   echo "  auth              Re-authenticate with Google Calendar"
   echo "  later             Show only the 'Later Today' section"
   echo "  filtered          Show the list of filtered appointments"
-  echo "  help, --help      Show this help message"
+  echo "  help, --help, -h  Show this help message"
+  echo "  --version, -v     Show version information"
   echo ""
   echo "DATE OPTIONS:"
   echo "  (no args)         Show today's schedule (default)"
-  echo "  yesterday, yday   Show yesterday's schedule"
+  echo "  yesterday, yday, prev  Show yesterday's schedule"
   echo "  monday            Show most recent Monday's schedule"
   echo "  tuesday           Show most recent Tuesday's schedule"
   echo "  wednesday         Show most recent Wednesday's schedule"
@@ -359,8 +360,13 @@ main() {
       gday_show_filtered_appointments
       return
       ;;
-    --help|help)
+    --help|help|-h)
       gday_show_help
+      return
+      ;;
+    --version|-v)
+      gday_show_banner
+      echo "VERSION: $GDAY_VERSION"
       return
       ;;
   esac
