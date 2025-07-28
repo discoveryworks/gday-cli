@@ -1,10 +1,10 @@
 class Gday < Formula
   desc "Personal calendar and task management CLI that integrates Google Calendar with daily workflows"
   homepage "https://github.com/discoveryworks/gday-cli"
-  url "https://github.com/discoveryworks/gday-cli/archive/v1.1.2.tar.gz"
-  sha256 "f0287b03d1051179ecdc561221d65395a4668df78468ecb453cdac73202cce09"
+  url "https://github.com/discoveryworks/gday-cli/archive/v1.1.3.tar.gz"
+  sha256 "f3d3b309d762660efd36e1e2996ffc48d6b0fe08dfbaba4eb3d5d426518153e2"
   license "MIT"
-  version "1.1.2"
+  version "1.1.3"
 
   depends_on "python3"
   
@@ -34,6 +34,6 @@ class Gday < Formula
   test do
     # Test that the binary exists and shows help
     assert_match "gday - Personal calendar and task management tool", shell_output("#{bin}/gday --help")
-    assert_match "VERSION: 1.1.2", shell_output("#{bin}/gday --help")
+    assert_match "VERSION: 1.1.3", shell_output("#{bin}/gday --help")
   end
 end
