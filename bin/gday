@@ -86,7 +86,7 @@ gday_show_help() {
   echo ""
   echo "DATE OPTIONS:"
   echo "  (no args)         Show today's schedule (default)"
-  echo "  yesterday, yday, prev  Show yesterday's schedule"
+  echo "  yesterday, prev   Show yesterday's schedule"
   echo "  monday            Show most recent Monday's schedule"
   echo "  tuesday           Show most recent Tuesday's schedule"
   echo "  wednesday         Show most recent Wednesday's schedule"
@@ -114,7 +114,7 @@ gday_show_help() {
 parse_arbitrary_date() {
   local input_date="$1"
   local parsed_date=""
-  
+
   # Try different date formats
   # ISO format: 1986-06-05
   if [[ "$input_date" =~ ^[0-9]{4}-[0-9]{1,2}-[0-9]{1,2}$ ]]; then
@@ -132,7 +132,7 @@ parse_arbitrary_date() {
       parsed_date=$(date -j -f "%b %d, %Y" "$input_date" "+%Y-%m-%d" 2>/dev/null)
     fi
   fi
-  
+
   # If we successfully parsed the date, set the global variables
   if [[ -n "$parsed_date" ]]; then
     date_arg="$parsed_date"
@@ -147,7 +147,7 @@ parse_arbitrary_date() {
 # Process command line arguments and determine date
 process_date_args() {
   case "$1" in
-    prev|yesterday|yday|then)
+    prev|yesterday|then)
       date_arg="yesterday"
       display_date=$(date -v -1d "+%m/%d - %A")
       week_number=$(date -v -1d "+%V")
@@ -215,7 +215,7 @@ process_prompts() {
   prompt_groups=()
   prompt_frequencies=()
   prompt_contents=()
-  
+
   # Arrays for storing group data (index-based for compatibility)
   group_names=()
   group_frequencies=()
@@ -297,7 +297,7 @@ process_prompts() {
     local content="${group_contents[$i]}"
     # Split content by | delimiter
     IFS='|' read -a prompts <<< "$content"
-    
+
     case "$frequency" in
       "daily")
         for prompt in "${prompts[@]}"; do
