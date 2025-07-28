@@ -109,8 +109,10 @@ gday_process_calendar_data() {
   
   local body=""
   local lines=()
+  local pomodoro_lines=()  # Store pomodoro lines separately for filtering
   local prev_time=""
   local all_day_events=()
+  local occupied_time_slots=()  # Track time slots with actual appointments
 
   while IFS= read -r line; do
     line=$(echo "$line" | sed 's/^[ \t]*//') # trim whitespace
@@ -151,7 +153,14 @@ gday_process_calendar_data() {
             time=$(echo "$time" | sed 's/:45/:30/')
             item="$item - $original_time"
           fi
-          lines+=("$time|$item")
+          
+          # Separate pomodoros from regular appointments  
+          if [[ "$item" == "🍅" ]]; then
+            pomodoro_lines+=("$time|$item")
+          else
+            lines+=("$time|$item")
+            occupied_time_slots+=("$time")
+          fi
         else
           # For longer events, split into 30-minute blocks
           local blocks=$((total_minutes / 30))
@@ -162,7 +171,15 @@ gday_process_calendar_data() {
           for ((i=0; i<blocks; i++)); do
             local time_number=$(echo "$time" | tr -d '[:alpha:]' | tr -d ':')
             local padded_item=$(generate_repeated_emoji "$item" "$i" "$time_number")
-            lines+=("$time|$padded_item")
+            
+            # Separate pomodoros from regular appointments
+            if [[ "$item" == "🍅" ]]; then
+              pomodoro_lines+=("$time|$padded_item")
+            else
+              lines+=("$time|$padded_item")
+              occupied_time_slots+=("$time")
+            fi
+            
             if [[ $i -lt $((blocks - 1)) ]]; then
               time=$(add_pomodoro "$time")
             fi
@@ -232,7 +249,14 @@ gday_process_calendar_data() {
           item="$item - $original_time"
         fi
         new_line="$time|$item"
-        lines+=("$new_line")
+        
+        # Separate pomodoros from regular appointments
+        if [[ "$item" == "🍅" ]]; then
+          pomodoro_lines+=("$new_line")
+        else
+          lines+=("$new_line")
+          occupied_time_slots+=("$time")
+        fi
       else
         # For longer events, split into 30-minute blocks
         local blocks=$((total_minutes / 30))
@@ -244,9 +268,17 @@ gday_process_calendar_data() {
           local time_number=$(echo "$time" | tr -d '[:alpha:]' | tr -d ':')
           local padded_item=$(generate_repeated_emoji "$item" "$i" "$time_number")
           new_line="$time|$padded_item"
-          if [[ "$padded_item" != "🍅" || "$time" != "$prev_time" ]]; then
-            lines+=("$new_line")
+          
+          # Separate pomodoros from regular appointments
+          if [[ "$padded_item" == "🍅" ]]; then
+            pomodoro_lines+=("$new_line")
+          else
+            if [[ "$padded_item" != "🍅" || "$time" != "$prev_time" ]]; then
+              lines+=("$new_line")
+            fi
+            occupied_time_slots+=("$time")
           fi
+          
           prev_time="$time"
           time=$(add_pomodoro "$time")
         done
@@ -264,6 +296,76 @@ gday_process_calendar_data() {
 
   # Add filtered all-day events to the beginning of the lines array
   lines=("${filtered_all_day_events[@]}" "${lines[@]}")
+
+  # Add non-conflicting pomodoro lines
+  for pomodoro_line in "${pomodoro_lines[@]}"; do
+    IFS='|' read -r pomo_time pomo_item <<< "$pomodoro_line"
+    local is_occupied=false
+    
+    # Check if this time slot is occupied by a real appointment
+    for occupied_slot in "${occupied_time_slots[@]}"; do
+      if [[ "$pomo_time" == "$occupied_slot" ]]; then
+        is_occupied=true
+        break
+      fi
+    done
+    
+    # If not occupied, add the pomodoro line
+    if ! $is_occupied; then
+      lines+=("$pomodoro_line")
+    fi
+  done
+
+  # Sort all lines by time to maintain chronological order
+  # Create a temporary array to hold sortable entries
+  local sortable_lines=()
+  local non_time_lines=()
+  
+  for line in "${lines[@]}"; do
+    if [[ "$line" =~ ^all-day\| ]]; then
+      # Keep all-day events at the beginning
+      non_time_lines+=("$line")
+    else
+      IFS='|' read -r time_part item_part <<< "$line"
+      # Convert time to sortable format (24-hour format for sorting)
+      local sort_time
+      if [[ "$time_part" =~ ([0-9]{1,2}):([0-9]{2})(am|pm) ]]; then
+        local hour="${BASH_REMATCH[1]}"
+        local minute="${BASH_REMATCH[2]}"
+        local ampm="${BASH_REMATCH[3]}"
+        
+        # Convert to 24-hour format for sorting
+        if [[ "$ampm" == "am" ]]; then
+          if [[ "$hour" == "12" ]]; then
+            sort_time="00$minute"
+          else
+            sort_time=$(printf "%02d%s" "$hour" "$minute")
+          fi
+        else
+          if [[ "$hour" == "12" ]]; then
+            sort_time="12$minute"
+          else
+            sort_time=$(printf "%02d%s" $((hour + 12)) "$minute")
+          fi
+        fi
+        
+        sortable_lines+=("$sort_time|$line")
+      else
+        # Fallback for any lines that don't match time format
+        sortable_lines+=("9999|$line")
+      fi
+    fi
+  done
+  
+  # Sort the time-based lines and extract just the original line part
+  local sorted_lines=()
+  while IFS= read -r sorted_line; do
+    # Extract everything after the first pipe (the original line)
+    sorted_lines+=("${sorted_line#*|}")
+  done < <(printf '%s\n' "${sortable_lines[@]}" | sort -t'|' -k1,1n)
+  
+  # Combine non-time lines (all-day events) with sorted time lines
+  lines=("${non_time_lines[@]}" "${sorted_lines[@]}")
 
   # Add emoji to items lacking emoji and construct the final table
   for line in "${lines[@]}"; do
