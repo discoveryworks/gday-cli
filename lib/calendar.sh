@@ -421,7 +421,8 @@ generate_later_today_h2s() {
     /^\| [0-9]/ {
       line = $0
       sub(/^\|[^|]+\| /, "## ", line)  # Remove everything up to the title
-      sub(/ \|$/, "", line)  # Remove trailing pipe
+      sub(/ *\|$/, "", line)  # Remove trailing whitespace and pipe
+      gsub(/ +$/, "", line)  # Trim any remaining trailing whitespace
 
       # Extract appointment title for exact matching
       title = line
