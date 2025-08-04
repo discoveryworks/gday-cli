@@ -1,0 +1,85 @@
+# gday-cli Time Rules Configuration
+# Human-readable rules for complex time handling behaviors
+
+version: "1.0"
+
+# Time alignment rules for off-hour appointments
+time_alignment:
+  # How to handle appointments that don't start on :00 or :30
+  off_hour_behavior:
+    first_block:
+      # Show actual time rounded down + cherry indicator
+      display_strategy: "round_down_with_cherry"
+      emoji_pattern: "{base_clock}🍒"
+      
+    subsequent_blocks:
+      # Align to standard 30-minute boundaries
+      alignment_strategy: "snap_to_boundary" 
+      boundary_minutes: [0, 30]  # :00 and :30 minutes
+      
+    examples:
+      - input_time: "10:15am"
+        blocks:
+          - time: "10:15am" 
+            display: "🕙🍒"  # 10:00 + cherry
+            note: "Shows rounded down time with cherry"
+          - time: "10:30am"   # Next block snaps to boundary
+            display: "🕥"     # Normal 10:30 emoji
+          - time: "11:00am"   # Continues on boundaries
+            display: "🕚"
+
+# Emoji rules for different time patterns
+emoji_rules:
+  standard_times:
+    # Exact matches for standard clock times
+    "8:00am": "🕗"
+    "8:30am": "🕣"
+    "9:00am": "🕘"
+    # ... (complete mapping)
+    
+  off_hour_times:
+    # Pattern for non-standard times
+    strategy: "round_down_with_cherry"
+    cherry_emoji: "🍒"
+    
+  repeated_emojis:
+    # How to handle multiple time blocks for same appointment
+    cherry_behavior:
+      first_block: "include_cherry"
+      subsequent_blocks: "base_emoji_only"
+      
+# Appointment processing rules      
+appointment_rules:
+  grouping:
+    # How to sort/group appointments
+    default_strategy: "alpha"  # Group appointments together
+    strategies:
+      alpha: "Group same appointments together"
+      interleaved: "Strict chronological order"
+      
+  pomodoros:
+    # Special handling for 🍅 pomodoro entries
+    emoji: "🍅"
+    treat_as: "unique_appointments"  # Each is separate, don't group
+    conflict_resolution: "hide_when_occupied"
+    
+  conflict_detection:
+    # How to detect when appointments overlap time slots
+    strategy: "exact_time_match"
+    occupied_slot_behavior: "hide_conflicting_pomodoros"
+
+# Visual formatting rules
+display_rules:
+  table_formatting:
+    time_column_width: 8
+    item_column_target_width: 86
+    
+  emoji_spacing:
+    # How emojis affect visual width calculations
+    emoji_width_multiplier: 2
+    
+# Advanced time patterns (future extensibility)
+temporal_patterns:
+  # Could extend with RRULE-like patterns if needed
+  # business_hours: "FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR;BYHOUR=9,10,11,14,15,16,17"
+  # pomodoro_slots: "FREQ=DAILY;BYMINUTE=0,30"

@@ -164,6 +164,114 @@ add_pomodoro() {
   echo $new_time | sed 's/^0//' | tr '[:upper:]' '[:lower:]'
 }
 
+# Function to get the next 30-minute boundary time after an off-hour appointment
+get_next_boundary_time() {
+  local time=$1
+  local is_first_block=${2:-false}
+  
+  # If this is the first block of an off-hour appointment, return the original time
+  if [[ "$is_first_block" == "true" ]]; then
+    echo "$time"
+    return
+  fi
+  
+  # For subsequent blocks, snap to the next 30-minute boundary
+  local hour_part minute_part ampm_part
+  if [[ $time =~ ([0-9]{1,2}):([0-9]{2})([ap]m) ]]; then
+    hour_part="${BASH_REMATCH[1]}"
+    minute_part="${BASH_REMATCH[2]}"
+    ampm_part="${BASH_REMATCH[3]}"
+    
+    # Determine next boundary
+    if [[ $minute_part -lt 30 ]]; then
+      # Round up to :30 of same hour
+      echo "${hour_part}:30${ampm_part}"
+    else
+      # Round up to :00 of next hour
+      local next_hour=$((hour_part + 1))
+      if [[ $next_hour -eq 13 ]]; then
+        next_hour=1
+        ampm_part=$([ "$ampm_part" = "am" ] && echo "pm" || echo "am")
+      elif [[ $next_hour -eq 12 && "$ampm_part" == "am" ]]; then
+        ampm_part="pm"
+      fi
+      echo "${next_hour}:00${ampm_part}"
+    fi
+  else
+    # Fallback to original add_pomodoro behavior
+    add_pomodoro "$time"
+  fi
+}
+
+# Insert a line in chronological order (for pomodoros)
+insert_chronological() {
+  local new_line="$1"
+  local -n lines_ref=$2
+  
+  IFS='|' read -r new_time new_item <<< "$new_line"
+  
+  # Convert time to sortable format for comparison
+  local new_sort_time=$(convert_time_to_sortable "$new_time")
+  
+  # Find insertion point
+  local inserted=false
+  local temp_lines=()
+  
+  for line in "${lines_ref[@]}"; do
+    if [[ "$line" =~ ^all-day\| ]]; then
+      # Keep all-day events at the beginning
+      temp_lines+=("$line")
+      continue
+    fi
+    
+    IFS='|' read -r line_time line_item <<< "$line"
+    local line_sort_time=$(convert_time_to_sortable "$line_time")
+    
+    # Insert before the first line with a later time
+    if [[ ! $inserted && $new_sort_time -lt $line_sort_time ]]; then
+      temp_lines+=("$new_line")
+      inserted=true
+    fi
+    temp_lines+=("$line")
+  done
+  
+  # If not inserted yet, append at the end
+  if [[ ! $inserted ]]; then
+    temp_lines+=("$new_line")
+  fi
+  
+  lines_ref=("${temp_lines[@]}")
+}
+
+# Convert time to sortable 24-hour format
+convert_time_to_sortable() {
+  local time="$1"
+  
+  if [[ "$time" =~ ([0-9]{1,2}):([0-9]{2})(am|pm) ]]; then
+    local hour="${BASH_REMATCH[1]}"
+    local minute="${BASH_REMATCH[2]}"
+    local ampm="${BASH_REMATCH[3]}"
+    
+    # Convert to 24-hour format for sorting
+    if [[ "$ampm" == "am" ]]; then
+      if [[ "$hour" == "12" ]]; then
+        echo "00$minute"
+      else
+        printf "%02d%s" "$hour" "$minute"
+      fi
+    else
+      if [[ "$hour" == "12" ]]; then
+        echo "12$minute"
+      else
+        printf "%02d%s" $((hour + 12)) "$minute"
+      fi
+    fi
+  else
+    # Fallback for any lines that don't match time format
+    echo "9999"
+  fi
+}
+
 # Process calendar data from gcalcli into structured format
 gday_process_calendar_data() {
   local calendar_data="$1"
@@ -234,6 +342,12 @@ gday_process_calendar_data() {
             blocks=1
           fi
           
+          # Check if this is an off-hour appointment (not :00 or :30)
+          local is_off_hour=false
+          if [[ $time =~ :([0-9]{2})[ap]m$ ]] && [[ "${BASH_REMATCH[1]}" != "00" ]] && [[ "${BASH_REMATCH[1]}" != "30" ]]; then
+            is_off_hour=true
+          fi
+          
           for ((i=0; i<blocks; i++)); do
             local time_number=$(echo "$time" | tr -d '[:alpha:]' | tr -d ':')
             local padded_item=$(generate_repeated_emoji "$item" "$i" "$time_number")
@@ -247,7 +361,13 @@ gday_process_calendar_data() {
             fi
             
             if [[ $i -lt $((blocks - 1)) ]]; then
-              time=$(add_pomodoro "$time")
+              if [[ $is_off_hour == true ]]; then
+                # For off-hour appointments, use boundary alignment after first block
+                time=$(get_next_boundary_time "$time" $([ $i -eq 0 ] && echo "true" || echo "false"))
+              else
+                # For standard times, use regular 30-minute increments
+                time=$(add_pomodoro "$time")
+              fi
             fi
           done
         fi
@@ -330,6 +450,12 @@ gday_process_calendar_data() {
           blocks=1
         fi
 
+        # Check if this is an off-hour appointment (not :00 or :30)
+        local is_off_hour=false
+        if [[ $time =~ :([0-9]{2})[ap]m$ ]] && [[ "${BASH_REMATCH[1]}" != "00" ]] && [[ "${BASH_REMATCH[1]}" != "30" ]]; then
+          is_off_hour=true
+        fi
+
         for ((i=0; i<blocks; i++)); do
           local time_number=$(echo "$time" | tr -d '[:alpha:]' | tr -d ':')
           local padded_item=$(generate_repeated_emoji "$item" "$i" "$time_number")
@@ -346,7 +472,15 @@ gday_process_calendar_data() {
           fi
           
           prev_time="$time"
-          time=$(add_pomodoro "$time")
+          if [[ $i -lt $((blocks - 1)) ]]; then
+            if [[ $is_off_hour == true ]]; then
+              # For off-hour appointments, use boundary alignment after first block
+              time=$(get_next_boundary_time "$time" $([ $i -eq 0 ] && echo "true" || echo "false"))
+            else
+              # For standard times, use regular 30-minute increments
+              time=$(add_pomodoro "$time")
+            fi
+          fi
         done
       fi
     fi
@@ -363,7 +497,7 @@ gday_process_calendar_data() {
   # Add filtered all-day events to the beginning of the lines array
   lines=("${filtered_all_day_events[@]}" "${lines[@]}")
 
-  # Add non-conflicting pomodoro lines
+  # Add non-conflicting pomodoro lines in chronological order
   for pomodoro_line in "${pomodoro_lines[@]}"; do
     IFS='|' read -r pomo_time pomo_item <<< "$pomodoro_line"
     local is_occupied=false
@@ -376,9 +510,9 @@ gday_process_calendar_data() {
       fi
     done
     
-    # If not occupied, add the pomodoro line
+    # If not occupied, insert in chronological order instead of appending
     if ! $is_occupied; then
-      lines+=("$pomodoro_line")
+      insert_chronological "$pomodoro_line" lines
     fi
   done
 
