@@ -3,35 +3,80 @@
 # Calendar processing functionality for gday
 # Handles gcalcli integration, event parsing, and formatting
 
-# Get emoji for a given time
+# Get emoji for a given time, with cherry tomato for off-hour times
 get_emoji_for_time() {
   local time_number="$1"
+  local is_cherry=false
+  
+  # Check for exact matches first (standard clock times)
   case "$time_number" in
-    800) echo "🕗" ;;
-    830) echo "🕣" ;;
-    900) echo "🕘" ;;
-    930) echo "🕤" ;;
-    1000) echo "🕙" ;;
-    1030) echo "🕥" ;;
-    1100) echo "🕚" ;;
-    1130) echo "🕦" ;;
-    1200) echo "🕛" ;;
-    1230) echo "🕧" ;;
-    100) echo "🕐" ;;
-    130) echo "🕜" ;;
-    200) echo "🕑" ;;
-    230) echo "🕝" ;;
-    300) echo "🕒" ;;
-    330) echo "🕞" ;;
-    400) echo "🕓" ;;
-    430) echo "🕟" ;;
-    500) echo "🕔" ;;
-    530) echo "🕠" ;;
-    600) echo "🕕" ;;
-    630) echo "🕡" ;;
-    700) echo "🕖" ;;
-    730) echo "🕢" ;;
-    *) echo "" ;;
+    800) echo "🕗"; return ;;
+    830) echo "🕣"; return ;;
+    900) echo "🕘"; return ;;
+    930) echo "🕤"; return ;;
+    1000) echo "🕙"; return ;;
+    1030) echo "🕥"; return ;;
+    1100) echo "🕚"; return ;;
+    1130) echo "🕦"; return ;;
+    1200) echo "🕛"; return ;;
+    1230) echo "🕧"; return ;;
+    100) echo "🕐"; return ;;
+    130) echo "🕜"; return ;;
+    200) echo "🕑"; return ;;
+    230) echo "🕝"; return ;;
+    300) echo "🕒"; return ;;
+    330) echo "🕞"; return ;;
+    400) echo "🕓"; return ;;
+    430) echo "🕟"; return ;;
+    500) echo "🕔"; return ;;
+    530) echo "🕠"; return ;;
+    600) echo "🕕"; return ;;
+    630) echo "🕡"; return ;;
+    700) echo "🕖"; return ;;
+    730) echo "🕢"; return ;;
+  esac
+  
+  # For non-standard times, round down to earlier time and add cherry
+  local hour_part=$((time_number / 100))
+  local minute_part=$((time_number % 100))
+  local base_time=""
+  
+  # Round down to nearest half-hour
+  if [ $minute_part -lt 30 ]; then
+    # Round down to :00
+    base_time="${hour_part}00"
+  else
+    # Round down to :30
+    base_time="${hour_part}30"
+  fi
+  
+  # Get base clock emoji and add cherry
+  case "$base_time" in
+    800) echo "🕗🍒" ;;
+    830) echo "🕣🍒" ;;
+    900) echo "🕘🍒" ;;
+    930) echo "🕤🍒" ;;
+    1000) echo "🕙🍒" ;;
+    1030) echo "🕥🍒" ;;
+    1100) echo "🕚🍒" ;;
+    1130) echo "🕦🍒" ;;
+    1200) echo "🕛🍒" ;;
+    1230) echo "🕧🍒" ;;
+    100) echo "🕐🍒" ;;
+    130) echo "🕜🍒" ;;
+    200) echo "🕑🍒" ;;
+    230) echo "🕝🍒" ;;
+    300) echo "🕒🍒" ;;
+    330) echo "🕞🍒" ;;
+    400) echo "🕓🍒" ;;
+    430) echo "🕟🍒" ;;
+    500) echo "🕔🍒" ;;
+    530) echo "🕠🍒" ;;
+    600) echo "🕕🍒" ;;
+    630) echo "🕡🍒" ;;
+    700) echo "🕖🍒" ;;
+    730) echo "🕢🍒" ;;
+    *) echo "🍒" ;;  # Fallback: just cherry for unrecognized times
   esac
 }
 
