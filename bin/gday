@@ -14,6 +14,7 @@ source "$SCRIPT_DIR/lib/calendar.sh"
 
 # Helper function to show only the "Later Today" section
 gday_later_today_section() {
+  local sort_type="${1:-alpha}"  # Default to appointment grouping
   gday_show_banner
 
   # Load configuration
@@ -32,8 +33,8 @@ gday_later_today_section() {
   local target_month=$(date "+%b")
   local target_date=$(date "+%d")
 
-  # Process calendar data and generate table
-  local body=$(gday_process_calendar_data "$calendar_data" "$target_day" "$target_month" "$target_date")
+  # Process calendar data and generate table with sort type
+  local body=$(gday_process_calendar_data "$calendar_data" "$target_day" "$target_month" "$target_date" "$sort_type")
 
   # Generate filtered "Later Today" section
   echo "$body" | generate_later_today_h2s "$filtered_appointments"
@@ -84,6 +85,10 @@ gday_show_help() {
   echo "  help, --help, -h  Show this help message"
   echo "  --version, -v     Show version information"
   echo ""
+  echo "SORTING OPTIONS:"
+  echo "  --sort-alpha      Group appointments together (default)"
+  echo "  --sort-interleaved Sort all entries by time (chronological)"
+  echo ""
   echo "DATE OPTIONS:"
   echo "  (no args)         Show today's schedule (default)"
   echo "  yesterday, prev   Show yesterday's schedule"
@@ -106,6 +111,8 @@ gday_show_help() {
   echo "  gday \"June 5, 1986\" Same date with natural language"
   echo "  gday later        Show only appointments for later today"
   echo "  gday filtered     Show which appointments are filtered out"
+  echo "  gday --sort-interleaved  Show schedule with strict time sorting"
+  echo "  gday --sort-alpha friday Show Friday with appointment grouping"
   echo ""
   echo "VERSION: $GDAY_VERSION"
 }
@@ -339,6 +346,102 @@ process_prompts() {
   done
 }
 
+# Core gday processing function with sort type support
+gday_run() {
+  local sort_type="${1:-alpha}"  # Default to appointment grouping
+  shift  # Remove sort_type from remaining arguments
+  
+  # Handle special commands first
+  case "$1" in
+    auth)
+      echo "Removing gcalcli OAuth token..."
+      touch ~/.gcalcli_oauth
+      rm ~/.gcalcli_oauth
+      echo "running \`gcalcli agenda\`. If this fails, try \`gcalcli init\` to force the auth flow"
+      gcalcli init
+      return
+      ;;
+    later)
+      # Only show the "Later Today" section
+      gday_later_today_section "$sort_type"
+      return
+      ;;
+    filtered)
+      # Show filtered appointments from config
+      gday_show_filtered_appointments
+      return
+      ;;
+    --help|help|-h)
+      gday_show_help
+      return
+      ;;
+    --version|-v)
+      gday_show_banner
+      echo "VERSION: $GDAY_VERSION"
+      return
+      ;;
+  esac
+
+  # Process date arguments
+  process_date_args "$1"
+
+  # Load configuration
+  if ! gday_load_config; then
+    return 1
+  fi
+
+  # Show banner and validate calendars
+  gday_show_banner
+  gday_validate_calendars
+
+  echo ""
+  echo "-------------------------------------"
+  echo ""
+
+  # Determine target date components based on date_format
+  local target_day target_month target_date
+  if [[ "$date_format" == "today" ]]; then
+    target_day=$(date "+%a")
+    target_month=$(date "+%b")
+    target_date=$(date "+%d")
+  else
+    # Parse the date_arg to get day/month/date
+    target_day=$(date -j -f "%Y-%m-%d" "$date_arg" "+%a" 2>/dev/null)
+    target_month=$(date -j -f "%Y-%m-%d" "$date_arg" "+%b" 2>/dev/null)
+    target_date=$(date -j -f "%Y-%m-%d" "$date_arg" "+%d" 2>/dev/null)
+  fi
+
+  # Get calendar data
+  local calendar_data=$(gday_get_calendar_data "$date_arg")
+
+  # Process calendar data with sort type
+  local body=$(gday_process_calendar_data "$calendar_data" "$target_day" "$target_month" "$target_date" "$sort_type")
+
+  # Format dateline
+  local dateline="# $display_date"
+  if [[ $display_date == *"Monday"* ]]; then
+    dateline="# $display_date - 📆 Week $week_number"
+  fi
+
+  echo -e "${dateline}\n\n"
+
+  # Process and display prompts
+  process_prompts
+
+  # Display main schedule table
+  local title="## 🪢 Todo Today"
+  local table_header="| Time    | Item                                                                                   |"
+  local table_separator="|---------|----------------------------------------------------------------------------------------|"
+  local kicker="\n******* DO WHATEVER THE SCHEDULE TELLS ME. AND ONLY THAT.**********\n\n\n"
+
+  echo -e "${title}\n${table_header}\n${table_separator}\n${body}\n\n"
+  echo -e "${kicker}"
+
+  # Generate filtered "Later Today" section
+  local filtered_appointments=$(gday_parse_filtered_appointments)
+  echo "$body" | generate_later_today_h2s "$filtered_appointments"
+}
+
 # Main gday function
 main() {
   case "$1" in
@@ -367,6 +470,18 @@ main() {
     --version|-v)
       gday_show_banner
       echo "VERSION: $GDAY_VERSION"
+      return
+      ;;
+    --sort-alpha)
+      # Process with default appointment grouping, remove flag and continue
+      shift
+      gday_run "alpha" "$@"
+      return
+      ;;
+    --sort-interleaved)
+      # Process with chronological interleaving, remove flag and continue
+      shift
+      gday_run "interleaved" "$@"
       return
       ;;
   esac
@@ -412,8 +527,8 @@ main() {
   # Get calendar data
   local calendar_data=$(gday_get_calendar_data "$date_arg")
 
-  # Process calendar data
-  local body=$(gday_process_calendar_data "$calendar_data" "$target_day" "$target_month" "$target_date")
+  # Process calendar data with default sort type
+  local body=$(gday_process_calendar_data "$calendar_data" "$target_day" "$target_month" "$target_date" "alpha")
 
   # Format dateline
   local dateline="# $display_date"

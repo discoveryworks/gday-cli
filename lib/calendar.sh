@@ -105,6 +105,7 @@ gday_process_calendar_data() {
   local target_day="$2"
   local target_month="$3" 
   local target_date="$4"
+  local sort_type="${5:-alpha}"  # Default to appointment grouping (alpha)
   local day_format="$target_day $target_month $target_date"
   
   local body=""
@@ -316,56 +317,59 @@ gday_process_calendar_data() {
     fi
   done
 
-  # Sort all lines by time to maintain chronological order
-  # Create a temporary array to hold sortable entries
-  local sortable_lines=()
-  local non_time_lines=()
-  
-  for line in "${lines[@]}"; do
-    if [[ "$line" =~ ^all-day\| ]]; then
-      # Keep all-day events at the beginning
-      non_time_lines+=("$line")
-    else
-      IFS='|' read -r time_part item_part <<< "$line"
-      # Convert time to sortable format (24-hour format for sorting)
-      local sort_time
-      if [[ "$time_part" =~ ([0-9]{1,2}):([0-9]{2})(am|pm) ]]; then
-        local hour="${BASH_REMATCH[1]}"
-        local minute="${BASH_REMATCH[2]}"
-        local ampm="${BASH_REMATCH[3]}"
-        
-        # Convert to 24-hour format for sorting
-        if [[ "$ampm" == "am" ]]; then
-          if [[ "$hour" == "12" ]]; then
-            sort_time="00$minute"
-          else
-            sort_time=$(printf "%02d%s" "$hour" "$minute")
-          fi
-        else
-          if [[ "$hour" == "12" ]]; then
-            sort_time="12$minute"
-          else
-            sort_time=$(printf "%02d%s" $((hour + 12)) "$minute")
-          fi
-        fi
-        
-        sortable_lines+=("$sort_time|$line")
+  # Apply sorting based on sort_type
+  if [[ "$sort_type" == "interleaved" ]]; then
+    # Sort all lines by time to maintain strict chronological order (old behavior)
+    local sortable_lines=()
+    local non_time_lines=()
+    
+    for line in "${lines[@]}"; do
+      if [[ "$line" =~ ^all-day\| ]]; then
+        # Keep all-day events at the beginning
+        non_time_lines+=("$line")
       else
-        # Fallback for any lines that don't match time format
-        sortable_lines+=("9999|$line")
+        IFS='|' read -r time_part item_part <<< "$line"
+        # Convert time to sortable format (24-hour format for sorting)
+        local sort_time
+        if [[ "$time_part" =~ ([0-9]{1,2}):([0-9]{2})(am|pm) ]]; then
+          local hour="${BASH_REMATCH[1]}"
+          local minute="${BASH_REMATCH[2]}"
+          local ampm="${BASH_REMATCH[3]}"
+          
+          # Convert to 24-hour format for sorting
+          if [[ "$ampm" == "am" ]]; then
+            if [[ "$hour" == "12" ]]; then
+              sort_time="00$minute"
+            else
+              sort_time=$(printf "%02d%s" "$hour" "$minute")
+            fi
+          else
+            if [[ "$hour" == "12" ]]; then
+              sort_time="12$minute"
+            else
+              sort_time=$(printf "%02d%s" $((hour + 12)) "$minute")
+            fi
+          fi
+          
+          sortable_lines+=("$sort_time|$line")
+        else
+          # Fallback for any lines that don't match time format
+          sortable_lines+=("9999|$line")
+        fi
       fi
-    fi
-  done
-  
-  # Sort the time-based lines and extract just the original line part
-  local sorted_lines=()
-  while IFS= read -r sorted_line; do
-    # Extract everything after the first pipe (the original line)
-    sorted_lines+=("${sorted_line#*|}")
-  done < <(printf '%s\n' "${sortable_lines[@]}" | sort -t'|' -k1,1n)
-  
-  # Combine non-time lines (all-day events) with sorted time lines
-  lines=("${non_time_lines[@]}" "${sorted_lines[@]}")
+    done
+    
+    # Sort the time-based lines and extract just the original line part
+    local sorted_lines=()
+    while IFS= read -r sorted_line; do
+      # Extract everything after the first pipe (the original line)
+      sorted_lines+=("${sorted_line#*|}")
+    done < <(printf '%s\n' "${sortable_lines[@]}" | sort -t'|' -k1,1n)
+    
+    # Combine non-time lines (all-day events) with sorted time lines
+    lines=("${non_time_lines[@]}" "${sorted_lines[@]}")
+  fi
+  # For sort_type="alpha" (default), keep original appointment grouping order (no additional sorting)
 
   # Add emoji to items lacking emoji and construct the final table
   for line in "${lines[@]}"; do
