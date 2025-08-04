@@ -110,11 +110,31 @@ generate_repeated_emoji() {
     return
   fi
   
-  # Generate repeated emoji (block_number + 1 times)
+  # Handle cherry tomato logic for off-hour times
+  local time_emoji_with_cherry=$(get_emoji_for_time "$time_number")
+  local has_cherry=false
+  if [[ "$time_emoji_with_cherry" == *"🍒"* ]]; then
+    has_cherry=true
+    # Extract base clock emoji (everything before the cherry)
+    local base_clock_emoji="${time_emoji_with_cherry%🍒}"
+  else
+    local base_clock_emoji="$leading_emoji"
+  fi
+  
+  # Generate repeated emoji
   local repeated_emoji=""
-  for ((i=0; i<=block_number; i++)); do
-    repeated_emoji="${repeated_emoji}${leading_emoji}"
-  done
+  if [[ $has_cherry == true ]]; then
+    # Cherry appears only once in the first block, subsequent blocks use just base clock
+    repeated_emoji="$time_emoji_with_cherry"  # First block always has cherry
+    for ((i=1; i<=block_number; i++)); do
+      repeated_emoji="${repeated_emoji}${base_clock_emoji}"  # Subsequent blocks without cherry
+    done
+  else
+    # Standard emoji repetition (no cherry logic)
+    for ((i=0; i<=block_number; i++)); do
+      repeated_emoji="${repeated_emoji}${leading_emoji}"
+    done
+  fi
   
   # If original item had a leading emoji, replace it; otherwise prepend
   if [[ -n $(get_first_emoji "$original_item") ]]; then
