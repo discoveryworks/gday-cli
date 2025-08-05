@@ -133,6 +133,132 @@ filtered_appointments:
 🌞🌞🌞🌞🌞 Extras
 =============================
 
+## Development & Contributing
+
+### Prerequisites
+- bash/zsh shell environment
+- Python 3.x with `gcalcli` installed
+- Docker (for testing installation methods)
+
+### Development Setup
+```bash
+# Clone the repository
+git clone https://github.com/discoveryworks/gday-cli.git
+cd gday-cli
+
+# Make the binary executable
+chmod +x bin/gday
+
+# Test basic functionality
+./bin/gday --help
+```
+
+### Running Tests
+
+**Behavior-Driven Development (BDD) Tests:**
+```bash
+# Install test dependencies
+npm install
+
+# Run BDD tests
+npm run test:bdd
+
+# Or run directly with cucumber
+npx cucumber-js features/time-handling.feature
+```
+
+**Installation Testing:**
+```bash
+# Test Homebrew installation in clean Docker environment
+./test-installation.sh homebrew
+
+# Test all installation methods
+./test-installation.sh all
+```
+
+**Manual Testing:**
+```bash
+# Test core functionality
+./bin/gday --help                    # Help output
+./bin/gday auth                      # Authentication flow  
+./bin/gday                           # Today's schedule (requires setup)
+
+# Test time handling edge cases
+./bin/gday --sort-alpha              # Appointment grouping
+./bin/gday --sort-interleaved        # Chronological sorting
+
+# Test individual functions
+npm run test:manual                  # Test time processing functions
+```
+
+### Architecture Overview
+
+**Core Components:**
+- `bin/gday` - Main executable and CLI argument processing
+- `lib/calendar.sh` - Time processing, emoji generation, Google Calendar integration
+- `lib/config.sh` - YAML configuration parsing and validation  
+- `lib/banner.sh` - Version display and visual branding
+
+**Configuration:**
+- `config/time-rules.yml` - Time processing rules and emoji mappings
+- `config.yml.example` - User configuration template
+
+**Documentation:**
+- `features/time-handling.feature` - BDD scenarios for time processing
+- `docs/time-handling.md` - Human-readable time processing documentation
+
+### Time Processing Logic
+
+The core time handling follows these rules (see `docs/time-handling.md` for details):
+
+1. **Standard times** (10:00am, 10:30am) get exact clock emojis
+2. **Off-hour times** (10:15am) round down + cherry indicator (🍒)
+3. **Multi-block appointments** snap subsequent blocks to boundaries
+4. **Pomodoros** (🍅) are unique appointments, inserted chronologically
+5. **Conflicts** hide pomodoros when real appointments occupy time slots
+
+### Contributing Guidelines
+
+**Code Style:**
+- Follow existing bash conventions in the codebase
+- Use meaningful variable names and comments for complex logic
+- Test edge cases, especially around time boundary handling
+
+**Submitting Changes:**
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/your-feature`
+3. Write/update BDD scenarios in `features/` for new behavior
+4. Update documentation in `docs/` if needed
+5. Test with `./test-installation.sh all`
+6. Submit a pull request with clear description
+
+**BDD Scenario Writing:**
+- Follow Gherkin format in `features/time-handling.feature`
+- Use "should" in scenario titles (see `.cursor/rules/well-formed-stories.mdc`)
+- Include concrete examples with data tables
+- Test both happy path and edge cases
+
+**Configuration Changes:**
+- Update `config/time-rules.yml` for new time processing rules
+- Keep configuration separate from test scenarios
+- Update documentation in `docs/time-handling.md`
+
+### Debugging
+
+**Enable debug output:**
+```bash
+# Add debug statements to lib/calendar.sh
+echo "DEBUG: Processing time $time" >&2
+
+# Test specific time handling
+bash -c 'source lib/calendar.sh && get_emoji_for_time 1015'
+```
+
+**Common Issues:**
+- **Authentication**: Run `gday auth` and check Google Cloud Console setup
+- **Time parsing**: Check `date` command compatibility (macOS vs Linux)
+- **Emoji display**: Verify terminal supports Unicode emoji rendering
+
 ## Acknowledgments
 
 Special thanks to the [gcalcli](https://github.com/insanum/gcalcli) project by Eric Davis and contributors. gday-cli is built on top of gcalcli's excellent Google Calendar integration, which handles all the heavy lifting for OAuth authentication and calendar data fetching.

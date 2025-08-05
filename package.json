@@ -8,9 +8,13 @@
   },
   "scripts": {
     "test": "bash -c 'source lib/version.sh && ./bin/gday --help | grep -q \"VERSION: $GDAY_VERSION\"'",
+    "test:bdd": "cucumber-js features/*.feature",
+    "test:install": "./test-installation.sh all",
+    "test:manual": "bash -c 'echo \"Testing core functions...\" && source lib/calendar.sh && get_emoji_for_time 1015'",
     "screenshot": "node screenshot-generator.js"
   },
   "devDependencies": {
+    "@cucumber/cucumber": "^10.0.0",
     "puppeteer": "^23.0.0"
   },
   "repository": {

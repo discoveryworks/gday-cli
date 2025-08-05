@@ -1,0 +1,72 @@
+# gday-cli Time Processing Configuration
+# Pure configuration without test scenarios or documentation
+
+version: "1.3.0"
+schema_version: "1.0"
+
+# Standard time to emoji mappings
+emoji_mappings:
+  standard_times:
+    "8:00am": "🕗"
+    "8:30am": "🕣"
+    "9:00am": "🕘"
+    "9:30am": "🕤"
+    "10:00am": "🕙"
+    "10:30am": "🕥"
+    "11:00am": "🕚"
+    "11:30am": "🕦"
+    "12:00pm": "🕛"
+    "12:30pm": "🕧"
+    "1:00pm": "🕐"
+    "1:30pm": "🕜"
+    "2:00pm": "🕑"
+    "2:30pm": "🕝"
+    "3:00pm": "🕒"
+    "3:30pm": "🕞"
+    "4:00pm": "🕓"
+    "4:30pm": "🕟"
+    "5:00pm": "🕔"
+    "5:30pm": "🕠"
+    "6:00pm": "🕕"
+    "6:30pm": "🕡"
+    "7:00pm": "🕖"
+    "7:30pm": "🕢"
+
+# Off-hour time handling
+off_hour_rules:
+  cherry_indicator: "🍒"
+  rounding_strategy: "round_down_to_nearest_half_hour"
+
+# Time block progression
+time_progression:
+  boundary_minutes: [0, 30]
+  first_block_strategy: "preserve_original_time"
+  subsequent_blocks_strategy: "snap_to_boundary"
+
+# Repeated emoji behavior
+repeated_emoji_rules:
+  cherry_frequency: "once_per_appointment_block"
+
+# Pomodoro scheduling
+pomodoro_rules:
+  emoji: "🍅"
+  treatment: "unique_appointments"
+  insertion: "chronological_order"
+  conflicts: "hide_when_occupied"
+
+# Sorting behavior
+sorting_rules:
+  default: "alpha"
+
+# Display formatting
+display_formatting:
+  time_column_width: 8
+  item_column_target_width: 86
+  emoji_width_multiplier: 2
+
+# Hour transitions
+hour_transitions:
+  "11:xx am -> 12:xx": "pm"
+  "12:xx pm -> 1:xx": "pm"
+  "11:xx pm -> 12:xx": "am"
+  "12:xx am -> 1:xx": "am"
