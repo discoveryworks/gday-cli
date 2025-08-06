@@ -1,10 +1,5 @@
 ---
 description: Git Commit Guidelines
-globs: 
-alwaysApply: true
----
----
-description: Git Commit Guidelines
 globs:
 alwaysApply: true
 ---

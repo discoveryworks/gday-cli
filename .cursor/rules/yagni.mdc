@@ -3,6 +3,7 @@ description: Applying the "You Aren't Gonna Need It" principle to development
 globs: "app/**/*.{rb,js,erb,haml,swift}"
 alwaysApply: false
 ---
+
 # YAGNI (You Aren't Gonna Need It)
 
 ## Core Philosophy

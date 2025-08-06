@@ -1,8 +1,10 @@
 ---
 name: well_formed_stories
 description: Standards for writing clear, actionable user stories using Gherkin syntax. Rules for articulating project requirements.
-globs: 
+globs:
 alwaysApply: false
+---
+
 filters:
   - type: file_extension
     pattern: "\\.feature$"

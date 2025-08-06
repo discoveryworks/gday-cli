@@ -3,6 +3,7 @@ description: Guidelines for progressive enhancement including offline capabiliti
 globs: "app/**/*.{rb,swift,js,html,erb,haml}"
 alwaysApply: false
 ---
+
 # Progressive Enhancement Principles
 
 ## Core Philosophy
@@ -11,26 +12,6 @@ alwaysApply: false
 - Content and core functionality must be accessible without JS
 - Treat offline support as a progressive enhancement, not a fallback
 - Follow the rule: "Make it work, make it better, make it optional"
-
-## Web Application (Hotwire/Turbo)
-- Structure HTML semantically before adding interactivity
-- Ensure all forms work with standard HTTP submissions first
-- Enhance with Turbo Frames and Streams for improved UX
-- Add Stimulus controllers as the final enhancement layer
-- Implement offline capabilities as an additional enhancement:
-  - Use Turbo's offline form submission capabilities
-  - Implement localStorage-based caching for critical user data
-  - Provide clear visual indicators for offline/online status
-  - Handle reconnection gracefully with Turbo's offline queue
-
-## iOS Application (Swift/SwiftUI)
-- Design core workflows that function with minimal network access
-- Layer in synchronization capabilities for a seamless experience:
-  - Use Core Data or Realm for local data persistence
-  - Implement a synchronization service to handle data conflicts
-  - Pre-fetch and cache a pool of box IDs for offline creation
-  - Store media locally before upload when offline
-  - Provide clear visual feedback about sync status
 
 ## API Design
 - Design APIs with degraded network conditions in mind

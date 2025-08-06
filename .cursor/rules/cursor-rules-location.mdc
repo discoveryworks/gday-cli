@@ -1,12 +1,9 @@
 ---
-description: 
-globs: 
-alwaysApply: true
----
----
 description: Cursor Rules Location
 globs: *.mdc
+alwaysApply: true
 ---
+
 # Cursor Rules Location
 
 Rules for placing and organizing Cursor rule files in the repository.
