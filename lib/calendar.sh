@@ -206,7 +206,7 @@ get_next_boundary_time() {
 # Insert a line in chronological order (for pomodoros)
 insert_chronological() {
   local new_line="$1"
-  local -n lines_ref=$2
+  local array_name="$2"
   
   IFS='|' read -r new_time new_item <<< "$new_line"
   
@@ -217,7 +217,10 @@ insert_chronological() {
   local inserted=false
   local temp_lines=()
   
-  for line in "${lines_ref[@]}"; do
+  # Use indirect expansion to access the array
+  eval "local -a current_lines=(\"\${${array_name}[@]}\")"
+  
+  for line in "${current_lines[@]}"; do
     if [[ "$line" =~ ^all-day\| ]]; then
       # Keep all-day events at the beginning
       temp_lines+=("$line")
@@ -240,7 +243,8 @@ insert_chronological() {
     temp_lines+=("$new_line")
   fi
   
-  lines_ref=("${temp_lines[@]}")
+  # Update the original array using indirect assignment
+  eval "${array_name}=(\"\${temp_lines[@]}\")"
 }
 
 # Convert time to sortable 24-hour format
