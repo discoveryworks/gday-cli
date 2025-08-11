@@ -3,4 +3,4 @@
 # Centralized version management for gday
 # Single source of truth for version number
 
-GDAY_VERSION="1.5.0"
+GDAY_VERSION="1.6.0"
