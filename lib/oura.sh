@@ -389,10 +389,17 @@ extract_oura_score() {
   local score_field="${3:-score}"
   
   local result=$(echo "$data" | jq -r --arg date "$date" \
-    '.data[] | select(.day == $date) | .'"$score_field"' // "N/A"' 2>/dev/null)
+    '[.data[] | select(.day == $date) | .'"$score_field"'][0] // "N/A"' 2>/dev/null)
   
-  # Clean up any newlines or whitespace
-  echo "$result" | tr -d '\n\r' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//'
+  # Clean up any newlines or whitespace  
+  local cleaned=$(echo "$result" | tr -d '\n\r' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+  
+  # Return N/A if empty or null
+  if [[ -z "$cleaned" || "$cleaned" == "null" ]]; then
+    echo "N/A"
+  else
+    echo "$cleaned"
+  fi
 }
 
 # Calculate average score from multi-day data

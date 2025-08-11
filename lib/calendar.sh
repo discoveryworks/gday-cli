@@ -37,8 +37,9 @@ get_emoji_for_time() {
   esac
   
   # For non-standard times, round down to earlier time and add cherry
-  local hour_part=$((time_number / 100))
-  local minute_part=$((time_number % 100))
+  # Force decimal interpretation to avoid octal issues (0900 treated as octal)
+  local hour_part=$((10#$time_number / 100))
+  local minute_part=$((10#$time_number % 100))
   local base_time=""
   
   # Round down to nearest half-hour
