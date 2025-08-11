@@ -1,0 +1,53 @@
+{
+  "data": [
+    {
+      "id": "early_session_aug8_evening",
+      "day": "2025-08-09",
+      "bedtime_start": "2025-08-08T22:45:59-04:00",
+      "bedtime_end": "2025-08-08T23:10:00-04:00", 
+      "total_sleep_duration": 180,
+      "time_in_bed": 1441,
+      "latency": 0,
+      "efficiency": 12,
+      "type": "sleep",
+      "movement_30_sec": "2221212112111121111111111111111111111111111111111"
+    },
+    {
+      "id": "main_session_aug8_to_aug9",
+      "day": "2025-08-09",
+      "bedtime_start": "2025-08-09T00:36:30-04:00",
+      "bedtime_end": "2025-08-09T07:17:53-04:00",
+      "total_sleep_duration": 20970,
+      "time_in_bed": 24083, 
+      "latency": 750,
+      "efficiency": 87,
+      "type": "long_sleep",
+      "movement_30_sec": "323222232223233312222111111111111111111111112111111111111211"
+    },
+    {
+      "id": "next_night_aug9_to_aug10",
+      "day": "2025-08-10",
+      "bedtime_start": "2025-08-10T02:34:59-04:00", 
+      "bedtime_end": "2025-08-10T06:22:59-04:00",
+      "total_sleep_duration": 11790,
+      "time_in_bed": 13680,
+      "latency": 210,
+      "efficiency": 86,
+      "type": "long_sleep", 
+      "movement_30_sec": "311111111121111112121111111121111111111122122112111221222222"
+    },
+    {
+      "id": "brief_nap_aug10_afternoon",
+      "day": "2025-08-10",
+      "bedtime_start": "2025-08-10T15:20:00-04:00",
+      "bedtime_end": "2025-08-10T15:45:00-04:00",
+      "total_sleep_duration": 900,
+      "time_in_bed": 1500,
+      "latency": 300,
+      "efficiency": 60,
+      "type": "sleep",
+      "movement_30_sec": "221111122"
+    }
+  ],
+  "next_token": null
+}
