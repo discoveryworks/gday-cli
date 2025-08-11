@@ -11,6 +11,7 @@ source "$SCRIPT_DIR/lib/version.sh"
 source "$SCRIPT_DIR/lib/banner.sh"
 source "$SCRIPT_DIR/lib/config.sh"
 source "$SCRIPT_DIR/lib/calendar.sh"
+source "$SCRIPT_DIR/lib/oura.sh"
 
 # Helper function to show only the "Later Today" section
 gday_later_today_section() {
@@ -82,8 +83,12 @@ gday_show_help() {
   echo "  auth              Re-authenticate with Google Calendar"
   echo "  later             Show only the 'Later Today' section"
   echo "  filtered          Show the list of filtered appointments"
+  echo "  oura              Show Oura ring health data for yesterday"
   echo "  help, --help, -h  Show this help message"
   echo "  --version, -v     Show version information"
+  echo ""
+  echo "HEALTH DATA OPTIONS:"
+  echo "  --oura            Show only Oura ring health data"
   echo ""
   echo "SORTING OPTIONS:"
   echo "  --sort-alpha      Group appointments together (default)"
@@ -423,7 +428,12 @@ gday_run() {
     dateline="# $display_date - 📆 Week $week_number"
   fi
 
-  echo -e "${dateline}\n\n"
+  echo -e "${dateline}\n"
+
+  # Display Oura health data if available
+  if [[ -n "$OURA_PAT" ]]; then
+    format_oura_summary
+  fi
 
   # Process and display prompts
   process_prompts
@@ -463,6 +473,11 @@ main() {
       gday_show_filtered_appointments
       return
       ;;
+    oura)
+      # Show Oura ring data
+      show_oura_data
+      return
+      ;;
     --help|help|-h)
       gday_show_help
       return
@@ -482,6 +497,16 @@ main() {
       # Process with chronological interleaving, remove flag and continue
       shift
       gday_run "interleaved" "$@"
+      return
+      ;;
+    --oura)
+      # Show only Oura data
+      show_oura_data
+      return
+      ;;
+    --oura-debug)
+      # Show raw Oura API data for debugging
+      show_oura_raw_data
       return
       ;;
   esac
@@ -536,7 +561,12 @@ main() {
     dateline="# $display_date - 📆 Week $week_number"
   fi
 
-  echo -e "${dateline}\n\n"
+  echo -e "${dateline}\n"
+
+  # Display Oura health data if available
+  if [[ -n "$OURA_PAT" ]]; then
+    format_oura_summary
+  fi
 
   # Process and display prompts
   process_prompts

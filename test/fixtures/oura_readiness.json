@@ -1,0 +1,37 @@
+{
+  "data": [
+    {
+      "id": "readiness1",
+      "day": "2025-08-09",
+      "score": 83,
+      "contributors": {
+        "activity_balance": 75,
+        "body_temperature": 85,
+        "hrv_balance": 80,
+        "previous_day_activity": 90,
+        "previous_night": 85,
+        "recovery_index": 80,
+        "resting_heart_rate": 85,
+        "sleep_balance": 80
+      },
+      "timestamp": "2025-08-09T00:00:00+00:00"
+    },
+    {
+      "id": "readiness2", 
+      "day": "2025-08-08",
+      "score": 78,
+      "contributors": {
+        "activity_balance": 70,
+        "body_temperature": 80,
+        "hrv_balance": 75,
+        "previous_day_activity": 85,
+        "previous_night": 80,
+        "recovery_index": 75,
+        "resting_heart_rate": 80,
+        "sleep_balance": 75
+      },
+      "timestamp": "2025-08-08T00:00:00+00:00"
+    }
+  ],
+  "next_token": null
+}

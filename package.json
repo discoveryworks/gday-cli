@@ -8,6 +8,7 @@
   },
   "scripts": {
     "test": "bash -c 'source lib/version.sh && ./bin/gday --help | grep -q \"VERSION: $GDAY_VERSION\"'",
+    "test:oura": "./test/test_oura_sleep_timing.sh",
     "test:bdd": "cucumber-js features/*.feature",
     "test:install": "./test-installation.sh all",
     "test:manual": "bash -c 'echo \"Testing core functions...\" && source lib/calendar.sh && get_emoji_for_time 1015'",
