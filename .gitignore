@@ -24,9 +24,11 @@ node_modules/
 # User configuration files (these should be created by users)
 config.yml
 
-# Test directories
-test/
+# Test directories (but allow BATS tests)
 tests/
+
+# BATS helper libraries (external dependencies)
+test/helpers/bats-*/
 
 # Coverage
 coverage/

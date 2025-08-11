@@ -7,10 +7,9 @@
     "gday": "./bin/gday"
   },
   "scripts": {
-    "test": "./test/test_all.sh",
-    "test:all": "./test/test_all.sh",
-    "test:unit": "./test/test_calendar_functions.sh && ./test/test_config_validation.sh && ./test/test_oura_sleep_timing.sh",
-    "test:integration": "bash -c 'source lib/calendar.sh && get_emoji_for_time 1015 | grep -q \"🕙🍒\"'",
+    "test": "bats test/*.bats",
+    "test:all": "npm run test && npm run test:bdd && npm run test:install",
+    "test:unit": "bats test/oura_sleep_timing.bats test/calendar_functions.bats test/cli_functionality.bats",
     "test:bdd": "cucumber-js features/*.feature",
     "test:install": "./test-installation.sh all",
     "screenshot": "node screenshot-generator.js"
