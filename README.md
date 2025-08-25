@@ -243,6 +243,9 @@ The core time handling follows these rules (see `docs/time-handling.md` for deta
 - Keep configuration separate from test scenarios
 - Update documentation in `docs/time-handling.md`
 
+**Release Process:**
+For maintainers releasing new versions, see [docs/RELEASING.md](docs/RELEASING.md) for the complete release checklist including version bumping, GitHub releases, and Homebrew formula updates.
+
 ### Debugging
 
 **Enable debug output:**
