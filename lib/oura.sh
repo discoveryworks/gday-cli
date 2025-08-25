@@ -534,8 +534,10 @@ format_oura_summary() {
   fi
   
   # Get main sleep session for duration and score calculations
+  # Use most recent session (by date) not longest session (by duration)
   local main_sleep_session=$(echo "$sleep_periods_data" | jq -r \
-    '.data | sort_by(.total_sleep_duration) | reverse | .[0]' 2>/dev/null)
+    '.data | sort_by(.day) | reverse | .[0]' 2>/dev/null)
+  
   
   ############################################################################
   # CORRECTED SLEEP TIMELINE CALCULATION
@@ -568,10 +570,10 @@ format_oura_summary() {
   local yesterday=$(get_yesterday_date) 
   local day_before_yesterday=$(get_date_days_ago 2)
   
-  # Get the most recent sleep period by finding the date with the longest sleep session
-  # This avoids mixing sessions from different nights
+  # Get the most recent sleep period by finding the most recent date
+  # Use most recent date, not longest sleep duration
   local main_sleep_date=$(echo "$sleep_periods_data" | jq -r \
-    '.data | group_by(.day) | map({day: .[0].day, total: map(.total_sleep_duration) | add}) | sort_by(.total) | reverse | .[0].day // "N/A"' 2>/dev/null)
+    '.data | map(.day) | sort | reverse | .[0] // "N/A"' 2>/dev/null)
   
   if [[ "$main_sleep_date" == "N/A" ]]; then
     # Fallback to yesterday if no sessions found
@@ -588,9 +590,11 @@ format_oura_summary() {
   local wake_up_time=$(echo "$sleep_sessions" | jq -r \
     'map(.bedtime_end) | sort | reverse | .[0] // "N/A"' 2>/dev/null)
   
-  # Get the main (longest) session for sleep stage data
+  # Get the main (most recent) session for sleep stage data  
+  # Use most recent session (by date) not longest session (by duration)
   local main_sleep_session=$(echo "$sleep_sessions" | jq \
-    'sort_by(.total_sleep_duration) | reverse | .[0] // null' 2>/dev/null)
+    'sort_by(.day) | reverse | .[0] // null' 2>/dev/null)
+  
   
   
   # Use Oura's precise total_sleep_duration instead of calculating time-in-bed
