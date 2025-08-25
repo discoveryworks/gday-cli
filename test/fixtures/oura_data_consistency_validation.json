@@ -1,0 +1,59 @@
+{
+  "sleep_periods": {
+    "data": [
+      {
+        "id": "test-session-aug23",
+        "contributors": {
+          "deep_sleep": 52,
+          "efficiency": 85,
+          "latency": 5,
+          "rem_sleep": 16,
+          "restfulness": 75,
+          "timing": 84,
+          "total_sleep": 95
+        },
+        "day": "2025-08-23",
+        "bedtime_start": "2025-08-22T22:54:30-04:00",
+        "bedtime_end": "2025-08-23T08:22:30-04:00",
+        "type": "long_sleep",
+        "time_in_bed": 34080,
+        "total_sleep_duration": 29010,
+        "efficiency": 85,
+        "latency": 300,
+        "rem_sleep_duration": 4641,
+        "deep_sleep_duration": 2321,
+        "light_sleep_duration": 22048,
+        "awake_duration": 5070
+      }
+    ]
+  },
+  "daily_sleep": {
+    "data": [
+      {
+        "id": "daily-aug23",
+        "contributors": {
+          "deep_sleep": 52,
+          "efficiency": 83,
+          "latency": 72,
+          "rem_sleep": 76,
+          "restfulness": 58,
+          "timing": 84,
+          "total_sleep": 95
+        },
+        "day": "2025-08-23",
+        "score": 79,
+        "timestamp": "2025-08-23T00:00:00+00:00"
+      }
+    ]
+  },
+  "expected_output": {
+    "sleep_duration_display": "8:03",
+    "time_in_bed_display": "9:28", 
+    "rem_percentage": 16,
+    "deep_percentage": 8,
+    "light_percentage": 76,
+    "sleep_score": 79,
+    "bedtime_start_formatted": "10:54PM",
+    "wake_time_formatted": "8:22AM"
+  }
+}

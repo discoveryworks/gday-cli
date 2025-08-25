@@ -592,17 +592,12 @@ format_oura_summary() {
   local main_sleep_session=$(echo "$sleep_sessions" | jq \
     'sort_by(.total_sleep_duration) | reverse | .[0] // null' 2>/dev/null)
   
-  # Calculate TOTAL sleep time as simple duration from sleep onset to wake up
-  # This gives the raw time in bed sleeping, regardless of sleep quality/interruptions
+  
+  # Use Oura's precise total_sleep_duration instead of calculating time-in-bed
+  # total_sleep_duration excludes awake periods and gives actual sleep time
   local total_sleep_seconds=0
-  if [[ "$sleep_onset" != "N/A" && "$wake_up_time" != "N/A" ]]; then
-    # Convert ISO timestamps to seconds since epoch for calculation
-    local sleep_epoch=$(date -j -f "%Y-%m-%dT%H:%M:%S" "$(echo "$sleep_onset" | sed 's/[+-][0-9][0-9]:[0-9][0-9]$//')" "+%s" 2>/dev/null || echo "0")
-    local wake_epoch=$(date -j -f "%Y-%m-%dT%H:%M:%S" "$(echo "$wake_up_time" | sed 's/[+-][0-9][0-9]:[0-9][0-9]$//')" "+%s" 2>/dev/null || echo "0")
-    
-    if [[ "$sleep_epoch" -gt 0 && "$wake_epoch" -gt 0 && "$wake_epoch" -gt "$sleep_epoch" ]]; then
-      total_sleep_seconds=$((wake_epoch - sleep_epoch))
-    fi
+  if [[ -n "$main_sleep_session" && "$main_sleep_session" != "null" ]]; then
+    total_sleep_seconds=$(echo "$main_sleep_session" | jq -r '.total_sleep_duration // 0' 2>/dev/null)
   fi
   
   # main_sleep_session is already set above for consistency
