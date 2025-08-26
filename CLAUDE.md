@@ -6,7 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Testing
 ```bash
-npm test  # Basic version check test
+npm test         # Run all BATS unit tests
+npm run test:all # Run BATS + BDD + installation tests
+npm run test:bdd # Run Cucumber BDD tests for time-handling
+npm run test:install # Test installation methods (requires Docker)
 ```
 
 ### Manual Testing
@@ -31,9 +34,10 @@ chmod +x bin/gday     # Make executable after changes
 - `config.yml.example` - Template configuration file for user setup
 
 ### Library Modules
-- `lib/banner.sh` - Version display and visual branding (currently 3.10.1)
+- `lib/banner.sh` - Version display and visual branding (currently 1.7.0)
 - `lib/config.sh` - YAML configuration parsing, calendar validation, and setup management
 - `lib/calendar.sh` - Google Calendar integration via gcalcli, event processing, and time formatting
+- `lib/oura.sh` - Oura Ring health data integration with sleep, readiness, and activity metrics
 
 ### Key Dependencies
 - **gcalcli** - Google Calendar CLI (peer dependency)

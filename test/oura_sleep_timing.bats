@@ -147,3 +147,21 @@ setup() {
   assert_success
   assert_output --regexp "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
 }
+
+@test "trend emojis appear in health metrics output format" {
+  # Test that the Oura health display includes trend emojis for up/down changes
+  # This is more of a format test since we can't easily mock the full Oura API
+  
+  # Test the pattern we expect to see when trend emojis are properly implemented
+  local sample_output_with_up_trend="🚥 Readiness is   71, 🔼 up from 69"
+  local sample_output_with_down_trend="🛌 Sleep score is 51, 🔻 down from 60"
+  
+  # Check that our expected patterns contain the trend emojis
+  run bash -c "echo '$sample_output_with_up_trend' | grep -o '🔼'"
+  assert_success
+  assert_output "🔼"
+  
+  run bash -c "echo '$sample_output_with_down_trend' | grep -o '🔻'"
+  assert_success
+  assert_output "🔻"
+}

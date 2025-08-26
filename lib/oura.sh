@@ -721,7 +721,13 @@ format_oura_summary() {
         direction="same as $prev_sleep"
       fi
     fi
-    echo "- 🛌 Sleep score is $most_recent_sleep, $direction ($sleep_change change from 7-day avg $avg_sleep)"
+    local sleep_trend_emoji=""
+    if [[ "$direction" == *"up from"* ]]; then
+      sleep_trend_emoji="🔼 "
+    elif [[ "$direction" == *"down from"* ]]; then
+      sleep_trend_emoji="🔻 "
+    fi
+    echo "- 🛌 Sleep score is $most_recent_sleep, $sleep_trend_emoji$direction ($sleep_change change from 7-day avg $avg_sleep)"
   fi
   
   if [[ "$most_recent_readiness" != "N/A" ]]; then
@@ -736,7 +742,13 @@ format_oura_summary() {
         direction="same as $prev_readiness"
       fi
     fi
-    echo "- 🚥 Readiness is   $most_recent_readiness, $direction ($readiness_change change from 7-day avg $avg_readiness)"
+    local readiness_trend_emoji=""
+    if [[ "$direction" == *"up from"* ]]; then
+      readiness_trend_emoji="🔼 "
+    elif [[ "$direction" == *"down from"* ]]; then
+      readiness_trend_emoji="🔻 "
+    fi
+    echo "- 🚥 Readiness is   $most_recent_readiness, $readiness_trend_emoji$direction ($readiness_change change from 7-day avg $avg_readiness)"
   fi
   
   if [[ "$most_recent_activity" != "N/A" && -n "$most_recent_activity" ]]; then
@@ -751,7 +763,13 @@ format_oura_summary() {
         direction="same as $prev_activity"
       fi
     fi
-    echo "- 🏃 Activity is    $most_recent_activity, $direction ($activity_change change from 7-day avg $avg_activity)"
+    local activity_trend_emoji=""
+    if [[ "$direction" == *"up from"* ]]; then
+      activity_trend_emoji="🔼 "
+    elif [[ "$direction" == *"down from"* ]]; then
+      activity_trend_emoji="🔻 "
+    fi
+    echo "- 🏃 Activity is    $most_recent_activity, $activity_trend_emoji$direction ($activity_change change from 7-day avg $avg_activity)"
   fi
   
   echo ""

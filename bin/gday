@@ -70,6 +70,56 @@ gday_show_filtered_appointments() {
   done < "$config_file"
 }
 
+# Helper function to edit config file
+gday_edit_config() {
+  local config_file="$HOME/.config/gday/config.yml"
+  
+  # Create config directory if it doesn't exist
+  if [[ ! -d "$(dirname "$config_file")" ]]; then
+    mkdir -p "$(dirname "$config_file")"
+  fi
+  
+  # Check if config file exists
+  if [[ ! -f "$config_file" ]]; then
+    echo "Configuration file not found at: $config_file"
+    echo "Creating a new config file from template..."
+    
+    # Check if we have a template in the repo
+    local template_file="$SCRIPT_DIR/config.yml.example"
+    if [[ -f "$template_file" ]]; then
+      cp "$template_file" "$config_file"
+      echo "Created config file from template: $template_file"
+    else
+      echo "Error: Template file not found at $template_file"
+      echo "Please create a config file manually or see the documentation"
+      return 1
+    fi
+  fi
+  
+  # Determine which editor to use
+  local editor=""
+  if [[ -n "$VISUAL" ]]; then
+    editor="$VISUAL"
+  elif [[ -n "$EDITOR" ]]; then
+    editor="$EDITOR"
+  elif command -v code >/dev/null 2>&1; then
+    editor="code"
+  elif command -v nano >/dev/null 2>&1; then
+    editor="nano"
+  elif command -v vim >/dev/null 2>&1; then
+    editor="vim"
+  elif command -v vi >/dev/null 2>&1; then
+    editor="vi"
+  else
+    echo "No suitable editor found. Please set EDITOR or VISUAL environment variable."
+    echo "Config file location: $config_file"
+    return 1
+  fi
+  
+  echo "Opening config file in $editor..."
+  "$editor" "$config_file"
+}
+
 # Helper function to show help
 gday_show_help() {
   gday_show_banner
@@ -83,7 +133,8 @@ gday_show_help() {
   echo "  auth              Re-authenticate with Google Calendar"
   echo "  later             Show only the 'Later Today' section"
   echo "  filtered          Show the list of filtered appointments"
-  echo "  oura              Show Oura ring health data for yesterday"
+  echo "  oura, health      Show Oura ring health data for yesterday"
+  echo "  conf, edit, config Edit the configuration file"
   echo "  help, --help, -h  Show this help message"
   echo "  --version, -v     Show version information"
   echo ""
@@ -473,9 +524,14 @@ main() {
       gday_show_filtered_appointments
       return
       ;;
-    oura)
+    oura|health)
       # Show Oura ring data
       show_oura_data
+      return
+      ;;
+    conf|edit|config)
+      # Open config file in default editor
+      gday_edit_config
       return
       ;;
     --help|help|-h)

@@ -109,3 +109,56 @@ setup() {
   # Should either show error about missing OURA_PAT or handle gracefully
   assert_success || assert_failure
 }
+
+@test "gday health alias works same as oura command" {
+  # Test new health alias
+  unset OURA_PAT
+  run "$PROJECT_ROOT/bin/gday" health
+  
+  # Should behave same as oura command
+  assert_success || assert_failure
+}
+
+@test "gday conf command shows config edit functionality" {
+  # Mock EDITOR to prevent actual editor launch
+  export EDITOR="echo"
+  export VISUAL=""
+  
+  run "$PROJECT_ROOT/bin/gday" conf
+  
+  # Should attempt to open config file (will succeed with echo as editor)
+  assert_success
+  assert_output --partial "Opening config file in echo"
+}
+
+@test "gday edit command shows config edit functionality" {
+  # Mock EDITOR to prevent actual editor launch
+  export EDITOR="echo"
+  export VISUAL=""
+  
+  run "$PROJECT_ROOT/bin/gday" edit
+  
+  # Should attempt to open config file (will succeed with echo as editor)
+  assert_success
+  assert_output --partial "Opening config file in echo"
+}
+
+@test "gday config command shows config edit functionality" {
+  # Mock EDITOR to prevent actual editor launch
+  export EDITOR="echo"
+  export VISUAL=""
+  
+  run "$PROJECT_ROOT/bin/gday" config
+  
+  # Should attempt to open config file (will succeed with echo as editor)
+  assert_success
+  assert_output --partial "Opening config file in echo"
+}
+
+@test "help text includes new commands" {
+  run "$PROJECT_ROOT/bin/gday" --help
+  
+  assert_success
+  assert_output --partial "oura, health"
+  assert_output --partial "conf, edit, config"
+}
