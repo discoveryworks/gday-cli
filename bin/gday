@@ -118,6 +118,17 @@ gday_edit_config() {
   
   echo "Opening config file in $editor..."
   "$editor" "$config_file"
+  
+  # After editing, refresh calendar data to pick up any new calendars
+  echo ""
+  echo "Config file updated. Refreshing calendar data..."
+  
+  # Load the updated config
+  if gday_load_config; then
+    gday_refresh_calendars
+  else
+    echo "Warning: Could not load updated config. Refresh skipped."
+  fi
 }
 
 # Helper function to show help
@@ -131,6 +142,7 @@ gday_show_help() {
   echo ""
   echo "COMMANDS:"
   echo "  auth              Re-authenticate with Google Calendar"
+  echo "  refresh           Refresh calendar data cache"
   echo "  later             Show only the 'Later Today' section"
   echo "  filtered          Show the list of filtered appointments"
   echo "  oura, health      Show Oura ring health data for yesterday"
@@ -532,6 +544,14 @@ main() {
     conf|edit|config)
       # Open config file in default editor
       gday_edit_config
+      return
+      ;;
+    refresh)
+      # Refresh calendar data cache
+      if ! gday_load_config; then
+        return 1
+      fi
+      gday_refresh_calendars
       return
       ;;
     --help|help|-h)

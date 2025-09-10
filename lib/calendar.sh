@@ -701,3 +701,32 @@ gday_get_calendar_data() {
   
   echo "$calendar_data_no_color"
 }
+
+# Refresh gcalcli calendar data cache
+gday_refresh_calendars() {
+  echo "Refreshing calendar data..."
+  
+  # Build command array for refresh
+  local cmd_array=()
+  cmd_array+=("gcalcli")
+  
+  # Add calendar arguments if we have them loaded
+  if [[ -n "${GCAL_CALENDARS:-}" ]]; then
+    for cal in "${GCAL_CALENDARS[@]}"; do
+      cmd_array+=("--cal" "$cal")
+    done
+  fi
+  
+  cmd_array+=("--refresh" "agenda" "today" "today" "--nocolor")
+  
+  echo "Running: ${cmd_array[*]}"
+  
+  # Execute refresh command
+  if "${cmd_array[@]}" >/dev/null 2>&1; then
+    echo "✓ Calendar data refreshed successfully"
+    return 0
+  else
+    echo "✗ Failed to refresh calendar data"
+    return 1
+  fi
+}

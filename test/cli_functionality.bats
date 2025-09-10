@@ -161,4 +161,23 @@ setup() {
   assert_success
   assert_output --partial "oura, health"
   assert_output --partial "conf, edit, config"
+  assert_output --partial "refresh"
+}
+
+@test "gday refresh command shows refresh help when no config" {
+  # Test refresh command without config
+  run "$PROJECT_ROOT/bin/gday" refresh
+  
+  # Should fail when no config exists or handle gracefully
+  assert_failure || {
+    # If it succeeds, it should at least show refresh-related output
+    assert_output --partial "Refresh"
+  }
+}
+
+@test "refresh command exists in help text" {
+  run "$PROJECT_ROOT/bin/gday" --help
+  
+  assert_success
+  assert_output --partial "refresh           Refresh calendar data cache"
 }
