@@ -230,7 +230,7 @@ process_date_args() {
     monday|tuesday|wednesday|thursday|friday|saturday|sunday)
       # Convert input to lowercase and capitalize first letter for display
       day_lower=$(echo "$1" | tr '[:upper:]' '[:lower:]')
-      day_display=$(echo "${day_lower^}")
+      day_display=$(echo "$day_lower" | sed 's/./\U&/')
 
       # Find the most recent occurrence of the specified day
       current_day=$(date "+%A" | tr '[:upper:]' '[:lower:]')
