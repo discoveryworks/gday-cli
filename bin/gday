@@ -219,6 +219,22 @@ parse_arbitrary_date() {
   fi
 }
 
+# Normalize weekday input to handle abbreviations
+normalize_weekday() {
+  local input=$(echo "$1" | tr '[:upper:]' '[:lower:]')
+  
+  case "$input" in
+    monday|mon) echo "monday" ;;
+    tuesday|tues|tue) echo "tuesday" ;;
+    wednesday|wed) echo "wednesday" ;;
+    thursday|thurs|thur|thu) echo "thursday" ;;
+    friday|fri) echo "friday" ;;
+    saturday|sat) echo "saturday" ;;
+    sunday|sun) echo "sunday" ;;
+    *) echo "" ;;  # Invalid weekday
+  esac
+}
+
 # Process command line arguments and determine date
 process_date_args() {
   case "$1" in
@@ -227,56 +243,62 @@ process_date_args() {
       display_date=$(date -v -1d "+%m/%d - %A")
       week_number=$(date -v -1d "+%V")
       ;;
-    monday|tuesday|wednesday|thursday|friday|saturday|sunday)
-      # Convert input to lowercase and capitalize first letter for display
-      day_lower=$(echo "$1" | tr '[:upper:]' '[:lower:]')
-      day_display=$(echo "$day_lower" | sed 's/./\U&/')
-
-      # Find the most recent occurrence of the specified day
-      current_day=$(date "+%A" | tr '[:upper:]' '[:lower:]')
-
-      if [[ "$current_day" == "$day_lower" ]]; then
-        # If today is the requested day, just use today
-        date_arg="today"
-        display_date=$(date "+%m/%d - %A")
-        week_number=$(date "+%V")
-      else
-        # Calculate days ago - first get day numbers (0=Sunday, 6=Saturday)
-        current_day_num=$(date "+%w")
-        target_day_num=0
-
-        case "$day_lower" in
-          monday) target_day_num=1 ;;
-          tuesday) target_day_num=2 ;;
-          wednesday) target_day_num=3 ;;
-          thursday) target_day_num=4 ;;
-          friday) target_day_num=5 ;;
-          saturday) target_day_num=6 ;;
-          sunday) target_day_num=0 ;;
-        esac
-
-        # Calculate days to go back
-        days_ago=$(( ($current_day_num - $target_day_num + 7) % 7 ))
-        if [[ $days_ago -eq 0 ]]; then
-          days_ago=7  # If calculated as 0, we want the previous week
-        fi
-
-        # Set the date argument
-        date_arg="$days_ago days ago"
-        display_date=$(date -v "-${days_ago}d" "+%m/%d - %A")
-        week_number=$(date -v "-${days_ago}d" "+%V")
-      fi
-      ;;
     *)
-      # Try to parse as an arbitrary date
-      if [[ -n "$1" ]] && parse_arbitrary_date "$1"; then
-        # Date was successfully parsed, variables set by parse_arbitrary_date
+      # First check if it's a weekday (full name or abbreviation)
+      normalized_day=$(normalize_weekday "$1")
+      
+      if [[ -n "$normalized_day" ]]; then
+        # It's a valid weekday
+        day_lower="$normalized_day"
+        day_display=$(echo "$day_lower" | sed 's/./\U&/')
+
+        # Find the most recent occurrence of the specified day
+        current_day=$(date "+%A" | tr '[:upper:]' '[:lower:]')
+
+        if [[ "$current_day" == "$day_lower" ]]; then
+          # If today is the requested day, just use today
+          date_arg="today"
+          display_date=$(date "+%m/%d - %A")
+          week_number=$(date "+%V")
+        else
+          # Calculate days ago - first get day numbers (0=Sunday, 6=Saturday)
+          current_day_num=$(date "+%w")
+          target_day_num=0
+
+          case "$day_lower" in
+            monday) target_day_num=1 ;;
+            tuesday) target_day_num=2 ;;
+            wednesday) target_day_num=3 ;;
+            thursday) target_day_num=4 ;;
+            friday) target_day_num=5 ;;
+            saturday) target_day_num=6 ;;
+            sunday) target_day_num=0 ;;
+          esac
+
+          # Calculate days to go back
+          days_ago=$(( ($current_day_num - $target_day_num + 7) % 7 ))
+          if [[ $days_ago -eq 0 ]]; then
+            days_ago=7  # If calculated as 0, we want the previous week
+          fi
+
+          # Set the date argument
+          date_arg="$days_ago days ago"
+          display_date=$(date -v "-${days_ago}d" "+%m/%d - %A")
+          week_number=$(date -v "-${days_ago}d" "+%V")
+        fi
+      elif [[ -n "$1" ]] && parse_arbitrary_date "$1"; then
+        # Try to parse as an arbitrary date - Date was successfully parsed, variables set by parse_arbitrary_date
         return 0
-      else
-        # Default to today
+      elif [[ -z "$1" ]]; then
+        # No argument provided - default to today
         date_arg="today"
         display_date=$(date "+%m/%d - %A")
         week_number=$(date "+%V")
+      else
+        # Invalid argument provided
+        echo "Error: Invalid date argument '$1'"
+        echo "Valid options: today, yesterday, weekdays (monday/mon, tuesday/tue, etc.), or specific dates (YYYY-MM-DD, MM/DD/YYYY)"
+        return 1
       fi
       ;;
   esac
@@ -451,7 +473,9 @@ gday_run() {
   esac
 
   # Process date arguments
-  process_date_args "$1"
+  if ! process_date_args "$1"; then
+    return 1
+  fi
 
   # Load configuration
   if ! gday_load_config; then
@@ -460,6 +484,17 @@ gday_run() {
 
   # Show banner and validate calendars
   gday_show_banner
+  
+  # Show what date we're running for
+  local target_date_display="${display_date:-today}"
+  if [[ "$target_date_display" =~ ^[0-9]+/[0-9]+ ]]; then
+    # For dates like "12/09 - Monday", extract just the day name or show full
+    target_date_display="${display_date}"
+  else
+    target_date_display="today"
+  fi
+  echo "Running gday for $target_date_display"
+  
   gday_validate_calendars
 
   echo ""
@@ -588,19 +623,31 @@ main() {
   esac
 
   # Process date arguments
-  process_date_args "$1"
+  if ! process_date_args "$1"; then
+    return 1
+  fi
 
   # Load configuration
   if ! gday_load_config; then
     return 1
   fi
 
+  gday_show_banner
+  
+  # Show what date we're running for
+  local target_date_display="${display_date:-today}"
+  if [[ "$target_date_display" =~ ^[0-9]+/[0-9]+ ]]; then
+    # For dates like "12/09 - Monday", extract just the day name or show full
+    target_date_display="${display_date}"
+  else
+    target_date_display="today"
+  fi
+  echo "Running gday for $target_date_display"
+
   # Validate calendars first
   if ! gday_validate_calendars; then
     return 1
   fi
-
-  gday_show_banner
 
   # Calculate target date for filtering events
   local target_day target_month target_date

@@ -75,13 +75,13 @@ setup() {
   assert_output --regexp "^[0-9]+\.[0-9]+\.[0-9]+$"
 }
 
-@test "gday with invalid flag runs normally (no validation yet)" {
+@test "gday with invalid flag shows error and exits" {
   run "$PROJECT_ROOT/bin/gday" --invalid-flag
   
-  # Currently runs normally - no flag validation implemented
-  # This is acceptable behavior for now (could be improved in future)
-  assert_success
-  assert_output --partial "Checking configured calendars"
+  # Now properly validates arguments and shows helpful error
+  assert_failure
+  assert_output --partial "Error: Invalid date argument '--invalid-flag'"
+  assert_output --partial "Valid options: today, yesterday, weekdays"
 }
 
 @test "all library files can be sourced without errors" {
@@ -180,4 +180,55 @@ setup() {
   
   assert_success
   assert_output --partial "refresh           Refresh calendar data cache"
+}
+
+@test "gday with invalid argument shows error and exits" {
+  run "$PROJECT_ROOT/bin/gday" invalid
+  
+  assert_failure
+  assert_output --partial "Error: Invalid date argument 'invalid'"
+  assert_output --partial "Valid options: today, yesterday, weekdays"
+}
+
+@test "weekday abbreviations work case insensitively" {
+  # Test monday abbreviation
+  run "$PROJECT_ROOT/bin/gday" mon
+  assert_success
+  assert_output --partial "Running gday for"
+  assert_output --partial "Monday"
+  
+  # Test uppercase tuesday abbreviation  
+  run "$PROJECT_ROOT/bin/gday" TUE
+  assert_success
+  assert_output --partial "Running gday for"
+  assert_output --partial "Tuesday"
+  
+  # Test thursday variations
+  run "$PROJECT_ROOT/bin/gday" thu
+  assert_success
+  assert_output --partial "Running gday for"
+  assert_output --partial "Thursday"
+  
+  run "$PROJECT_ROOT/bin/gday" thur
+  assert_success
+  assert_output --partial "Running gday for"
+  assert_output --partial "Thursday"
+}
+
+@test "gday shows running message with target date" {
+  # Test default (today)
+  run "$PROJECT_ROOT/bin/gday"
+  assert_success
+  assert_output --partial "Running gday for"
+  
+  # Test with weekday
+  run "$PROJECT_ROOT/bin/gday" friday
+  assert_success
+  assert_output --partial "Running gday for"
+  assert_output --partial "Friday"
+  
+  # Test with yesterday
+  run "$PROJECT_ROOT/bin/gday" yesterday
+  assert_success
+  assert_output --partial "Running gday for"
 }
