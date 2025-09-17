@@ -1,6 +1,6 @@
 {
   "name": "gday-cli",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "description": "Personal calendar and task management CLI that integrates Google Calendar with daily workflows",
   "main": "bin/gday",
   "bin": {

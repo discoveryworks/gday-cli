@@ -316,7 +316,7 @@ gday_process_calendar_data() {
         local duration_raw=$(echo "$next_line" | awk '/Length:/ {print $2}')
         local hours=$(echo "$duration_raw" | cut -d ':' -f 1)
         local minutes=$(echo "$duration_raw" | cut -d ':' -f 2)
-        local total_minutes=$((hours * 60 + minutes))
+        local total_minutes=$(( 10#$hours * 60 + 10#$minutes ))
         
         # Process this embedded event the same way as other timed events
         if [[ $total_minutes -eq 1440 || ($time == "12:00am" && $total_minutes -gt 720) ]]; then
@@ -420,7 +420,7 @@ gday_process_calendar_data() {
       local duration_raw=$(echo "$next_line" | awk '/Length:/ {print $2}')
       local hours=$(echo "$duration_raw" | cut -d ':' -f 1)
       local minutes=$(echo "$duration_raw" | cut -d ':' -f 2)
-      local total_minutes=$((hours * 60 + minutes))
+      local total_minutes=$(( 10#$hours * 60 + 10#$minutes ))
 
       # Check for all-day events (typically 24 hours)
       if [[ $total_minutes -eq 1440 || ($time == "12:00am" && $total_minutes -gt 720) ]]; then

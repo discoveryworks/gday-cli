@@ -8,7 +8,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # Expected version
-EXPECTED_VERSION="1.7.0"
+EXPECTED_VERSION="1.7.1"
 
 log() {
     echo -e "${GREEN}[INFO]${NC} $1"
