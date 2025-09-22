@@ -228,10 +228,114 @@ seconds_to_hhmm() {
     echo "N/A"
     return
   fi
-  
+
   local hours=$((seconds / 3600))
   local minutes=$(((seconds % 3600) / 60))
   printf "%d:%02d" "$hours" "$minutes"
+}
+
+# Check if sleep data appears incomplete based on heuristics
+# Returns "incomplete" if data seems missing, "complete" otherwise
+check_sleep_data_completeness() {
+  local total_sleep_seconds="$1"
+  local sleep_score="$2"
+  local session_count="$3"
+
+  # Convert to hours for easier comparison
+  local sleep_hours=$(echo "scale=1; $total_sleep_seconds / 3600" | bc 2>/dev/null || echo "0")
+
+  # Heuristics for incomplete data:
+  # 1. Very short sleep (< 4 hours) with high sleep score (> 75)
+  # 2. Sleep score suggests more sleep than sessions show
+  # 3. Only one brief session when score suggests good sleep
+
+  if [[ -n "$sleep_score" && "$sleep_score" != "N/A" && "$sleep_score" =~ ^[0-9]+$ ]]; then
+    # High score (75+) with very short sleep suggests missing data
+    if [[ "$sleep_score" -ge 75 && $(echo "$sleep_hours < 4" | bc 2>/dev/null) == 1 ]]; then
+      echo "incomplete"
+      return
+    fi
+
+    # Good score (65+) with extremely short sleep (< 3h) is suspicious
+    if [[ "$sleep_score" -ge 65 && $(echo "$sleep_hours < 3" | bc 2>/dev/null) == 1 ]]; then
+      echo "incomplete"
+      return
+    fi
+  fi
+
+  # Very short sleep duration regardless of score
+  if [[ $(echo "$sleep_hours < 2.5" | bc 2>/dev/null) == 1 ]]; then
+    echo "incomplete"
+    return
+  fi
+
+  echo "complete"
+}
+
+# Find and merge sleep sessions that span across calendar days
+# This handles cases where Oura splits one night's sleep into separate day buckets
+find_cross_day_sleep_sessions() {
+  local sleep_periods_data="$1"
+  local target_date="$2"  # The date we're looking for (yesterday)
+  local previous_date="$3"  # Day before yesterday
+
+  # Get sessions from target date
+  local target_sessions=$(echo "$sleep_periods_data" | jq --arg date "$target_date" \
+    '.data | map(select(.day == $date))' 2>/dev/null)
+
+  # Get evening sessions from previous date (after 8 PM) that might belong to target night
+  local evening_sessions=$(echo "$sleep_periods_data" | jq --arg date "$previous_date" \
+    '.data | map(select(.day == $date and (.bedtime_start | test("T(2[0-3]|1[8-9]):"))))' 2>/dev/null)
+
+  # Combine sessions if they're close in time (within 6 hours gap)
+  local all_sessions=$(echo "$target_sessions $evening_sessions" | jq -s 'add | sort_by(.bedtime_start)')
+
+  # Filter to only nighttime sessions (evening of previous day + early hours of target day)
+  # Include: 6PM-11:59PM from previous day, 12AM-12PM from target day (exclude afternoon naps)
+  local merged_sessions=$(echo "$all_sessions" | jq \
+    'map(select((.day == "'$target_date'" and (.bedtime_start | test("T(0[0-9]|1[0-1]):"))) or (.day == "'$previous_date'" and (.bedtime_start | test("T(1[8-9]|2[0-3]):")))))' 2>/dev/null)
+
+  echo "$merged_sessions"
+}
+
+# Estimate sleep duration from daily sleep score when sessions are incomplete
+# Uses Oura's total_sleep contributor score to estimate actual sleep duration
+estimate_sleep_from_daily_score() {
+  local sleep_data="$1"
+  local target_date="$2"
+
+  # Get the total_sleep contributor score (0-100)
+  local total_sleep_score=$(echo "$sleep_data" | jq -r --arg date "$target_date" \
+    '.data[] | select(.day == $date) | .contributors.total_sleep // "N/A"' 2>/dev/null)
+
+  if [[ "$total_sleep_score" == "N/A" || -z "$total_sleep_score" ]]; then
+    echo "N/A"
+    return
+  fi
+
+  # Rough estimation: total_sleep score correlates with actual sleep time
+  # Score 100 ≈ 8+ hours, Score 50 ≈ 4-5 hours, Score 25 ≈ 2-3 hours
+  # This is a heuristic based on Oura's scoring patterns
+  local estimated_hours
+  if [[ "$total_sleep_score" -ge 90 ]]; then
+    estimated_hours=8
+  elif [[ "$total_sleep_score" -ge 80 ]]; then
+    estimated_hours=7
+  elif [[ "$total_sleep_score" -ge 70 ]]; then
+    estimated_hours=6
+  elif [[ "$total_sleep_score" -ge 60 ]]; then
+    estimated_hours=5
+  elif [[ "$total_sleep_score" -ge 50 ]]; then
+    estimated_hours=4
+  elif [[ "$total_sleep_score" -ge 40 ]]; then
+    estimated_hours=3
+  else
+    estimated_hours=2
+  fi
+
+  # Convert to seconds
+  local estimated_seconds=$((estimated_hours * 3600))
+  echo "$estimated_seconds"
 }
 
 # Fetch Oura daily sleep data for a date range
@@ -290,9 +394,11 @@ get_oura_stress() {
   oura_api_request "/usercollection/daily_stress" "$start_date" "$end_date"
 }
 
-# Display all Oura data for yesterday
+# Display all Oura data for specified date (defaults to yesterday)
 show_oura_data() {
-  format_oura_summary
+  local target_date="${1:-$(get_yesterday_date)}"
+  local is_historical="${2:-false}"
+  format_oura_summary "$target_date" "$is_historical"
 }
 
 # Display raw Oura data for debugging
@@ -453,15 +559,26 @@ format_score_with_emoji() {
 }
 
 # Format compact Oura summary with meaningful baselines
+# Accepts optional target_date parameter (defaults to yesterday for most recent data)
 format_oura_summary() {
+  local target_date="${1:-$(get_yesterday_date)}"  # Default to yesterday
+  local is_historical="${2:-false}"  # Flag for historical vs current data mode
+
   if ! load_oura_credentials; then
     return 1
   fi
-  
-  # Get date ranges (check today and yesterday for most recent data)
+
+  # Get date ranges based on target date
   local today=$(date +%Y-%m-%d)
   local yesterday=$(get_yesterday_date)
   local day_before=$(get_date_days_ago 2)
+
+  # For historical queries, adjust the date calculations
+  if [[ "$target_date" != "$yesterday" ]]; then
+    is_historical="true"
+    # Recalculate relative dates based on target
+    day_before=$(date -j -v-1d -f "%Y-%m-%d" "$target_date" "+%Y-%m-%d" 2>/dev/null || echo "$target_date")
+  fi
   local week_dates=($(get_weekly_date_range))
   local week_start="${week_dates[0]}"
   local week_end="$today"  # Include today to catch any fresh data
@@ -479,16 +596,16 @@ format_oura_summary() {
   local today_activity=$(extract_oura_score "$activity_data" "$today" "score")
   local today_stress=$(extract_oura_score "$stress_data" "$today" "day_summary")
   
-  # Use today's data if available, otherwise yesterday's
-  local most_recent_date="$yesterday"
-  local most_recent_day=$(get_day_name "$yesterday")
-  local most_recent_readiness=$(extract_oura_score "$readiness_data" "$yesterday" "score")
-  local most_recent_sleep=$(extract_oura_score "$sleep_data" "$yesterday" "score")  
-  local most_recent_activity=$(extract_oura_score "$activity_data" "$yesterday" "score")
-  local most_recent_stress=$(extract_oura_score "$stress_data" "$yesterday" "day_summary")
+  # Use today's data if available, otherwise target date's data
+  local most_recent_date="$target_date"
+  local most_recent_day=$(get_day_name "$target_date")
+  local most_recent_readiness=$(extract_oura_score "$readiness_data" "$target_date" "score")
+  local most_recent_sleep=$(extract_oura_score "$sleep_data" "$target_date" "score")
+  local most_recent_activity=$(extract_oura_score "$activity_data" "$target_date" "score")
+  local most_recent_stress=$(extract_oura_score "$stress_data" "$target_date" "day_summary")
   
-  # If today has data, use it as most recent
-  if [[ "$today_readiness" != "N/A" || "$today_sleep" != "N/A" || "$today_activity" != "N/A" ]]; then
+  # If we're in current data mode and today has data, prefer today's data
+  if [[ "$is_historical" == "false" && ("$today_readiness" != "N/A" || "$today_sleep" != "N/A" || "$today_activity" != "N/A") ]]; then
     most_recent_date="$today"
     most_recent_day=$(get_day_name "$today")
     [[ "$today_readiness" != "N/A" ]] && most_recent_readiness="$today_readiness"
@@ -514,12 +631,14 @@ format_oura_summary() {
   ############################################################################
   
   # Get sleep periods data (expand range to catch sleep from previous night)
-  local day_before_yesterday=$(get_date_days_ago 2)
-  local sleep_periods_data=$(get_oura_sleep_periods "$day_before_yesterday" "$today" 2>/dev/null)
+  # Use a wider range around the target date to catch cross-day sessions
+  local range_start=$(date -j -v-2d -f "%Y-%m-%d" "$target_date" "+%Y-%m-%d" 2>/dev/null || echo "$target_date")
+  local range_end=$(date -j -v+1d -f "%Y-%m-%d" "$target_date" "+%Y-%m-%d" 2>/dev/null || echo "$target_date")
+  local sleep_periods_data=$(get_oura_sleep_periods "$range_start" "$range_end" 2>/dev/null)
   
   # Get daily activity data to detect actual bedtime (when movement stopped)
   # Use the same range as sleep periods to ensure we get the activity data
-  local activity_data=$(get_oura_activity "$day_before_yesterday" "$today" 2>/dev/null)
+  local activity_data=$(get_oura_activity "$range_start" "$range_end" 2>/dev/null)
   local activity_bedtime="N/A"
   
   # Extract activity string and analyze for bedtime
@@ -534,9 +653,24 @@ format_oura_summary() {
   fi
   
   # Get main sleep session for duration and score calculations
-  # Use most recent session (by date) not longest session (by duration)
-  local main_sleep_session=$(echo "$sleep_periods_data" | jq -r \
-    '.data | sort_by(.day) | reverse | .[0]' 2>/dev/null)
+  # First try yesterday, then day before, then pick longest session as fallback
+  local main_sleep_session=""
+
+  # Try target date first
+  main_sleep_session=$(echo "$sleep_periods_data" | jq -r --arg date "$target_date" \
+    '.data | map(select(.day == $date and .total_sleep_duration > 1800)) | sort_by(.total_sleep_duration) | reverse | .[0] // null' 2>/dev/null)
+
+  # If no substantial session on target date, try day before
+  if [[ "$main_sleep_session" == "null" || -z "$main_sleep_session" ]]; then
+    main_sleep_session=$(echo "$sleep_periods_data" | jq -r --arg date "$day_before" \
+      '.data | map(select(.day == $date and .total_sleep_duration > 1800)) | sort_by(.total_sleep_duration) | reverse | .[0] // null' 2>/dev/null)
+  fi
+
+  # Fallback to any substantial session if above failed
+  if [[ "$main_sleep_session" == "null" || -z "$main_sleep_session" ]]; then
+    main_sleep_session=$(echo "$sleep_periods_data" | jq -r \
+      '.data | map(select(.total_sleep_duration > 1800)) | sort_by(.total_sleep_duration) | reverse | .[0] // null' 2>/dev/null)
+  fi
   
   
   ############################################################################
@@ -550,58 +684,82 @@ format_oura_summary() {
   # sleep durations across sessions to match Apple Health's approach
   ############################################################################
   
-  # Try activity-based bedtime detection first (most accurate for actual "in bed" time)
+  # Use activity-based bedtime detection first (most accurate for actual "in bed" time)
   local bedtime_start="$activity_bedtime"
-  local bedtime_source="OURA_SLEEP_PERIODS"
+  local bedtime_source="OURA_ACTIVITY"
   local sleep_onset_source="OURA_SLEEP_PERIODS"
-  
-  # If we successfully got activity-based bedtime, mark it as the source
-  if [[ "$bedtime_start" != "N/A" && "$bedtime_start" =~ ^[0-9]{2}:[0-9]{2}$ ]]; then
-    bedtime_source="OURA_ACTIVITY"
-  else
-    # Fallback to earliest sleep period bedtime
-    bedtime_start=$(echo "$sleep_periods_data" | jq -r \
-      '.data | map(.bedtime_start) | sort | .[0] // "N/A"' 2>/dev/null)
+
+  # If activity-based bedtime failed, use earliest bedtime from main night sessions only
+  if [[ "$bedtime_start" == "N/A" || ! "$bedtime_start" =~ ^[0-9]{2}:[0-9]{2}$ ]]; then
+    bedtime_source="OURA_SLEEP_PERIODS"
+    bedtime_start=$(echo "$sleep_sessions" | jq -r \
+      'map(.bedtime_start) | sort | .[0] // "N/A"' 2>/dev/null)
   fi
   
   # Get sleep timing from most recent sleep period (yesterday or day before)
   # Strategy: Use EARLIEST sleep onset (when sleep first detected) and LATEST wake time (final wake up)
   # This matches user's request for "sleep onset to wake time" calculation
-  local yesterday=$(get_yesterday_date) 
-  local day_before_yesterday=$(get_date_days_ago 2)
+  # The target_date now correctly represents the session date (end date)
+  # For cross-day session detection, we need the day before as well
+  local main_date="$target_date"
+  local previous_date=$(date -j -v-1d -f "%Y-%m-%d" "$target_date" "+%Y-%m-%d" 2>/dev/null || echo "$target_date")
   
-  # Get the most recent sleep period by finding the most recent date
-  # Use most recent date, not longest sleep duration
-  local main_sleep_date=$(echo "$sleep_periods_data" | jq -r \
-    '.data | map(.day) | sort | reverse | .[0] // "N/A"' 2>/dev/null)
-  
-  if [[ "$main_sleep_date" == "N/A" ]]; then
-    # Fallback to yesterday if no sessions found
-    main_sleep_date="$yesterday"
+  # Get the date of the main sleep session (the longest valid sleep session)
+  local main_sleep_date="N/A"
+  if [[ -n "$main_sleep_session" && "$main_sleep_session" != "null" ]]; then
+    main_sleep_date=$(echo "$main_sleep_session" | jq -r '.day // "N/A"' 2>/dev/null)
   fi
-  
-  # Get all sessions from the main sleep date
-  local sleep_sessions=$(echo "$sleep_periods_data" | jq --arg date "$main_sleep_date" \
-    '.data | map(select(.day == $date))' 2>/dev/null)
-  
-  # Find the earliest sleep onset and latest wake time from this sleep date
+
+  if [[ "$main_sleep_date" == "N/A" ]]; then
+    # Fallback to target date if no sessions found
+    main_sleep_date="$target_date"
+  fi
+
+  # Use enhanced cross-day session merging to get complete sleep data
+  local sleep_sessions=$(find_cross_day_sleep_sessions "$sleep_periods_data" "$main_sleep_date" "$previous_date")
+
+  # Find sleep onset from substantial sessions (>30 min), not brief naps
+  # Use the earliest substantial sleep session as actual sleep onset
   local sleep_onset=$(echo "$sleep_sessions" | jq -r \
-    'map(.bedtime_start) | sort | .[0] // "N/A"' 2>/dev/null)
+    'map(select(.total_sleep_duration > 1800)) | map(.bedtime_start) | sort | .[0] // "N/A"' 2>/dev/null)
   local wake_up_time=$(echo "$sleep_sessions" | jq -r \
     'map(.bedtime_end) | sort | reverse | .[0] // "N/A"' 2>/dev/null)
   
-  # Get the main (most recent) session for sleep stage data  
-  # Use most recent session (by date) not longest session (by duration)
-  local main_sleep_session=$(echo "$sleep_sessions" | jq \
-    'sort_by(.day) | reverse | .[0] // null' 2>/dev/null)
   
   
-  
-  # Use Oura's precise total_sleep_duration instead of calculating time-in-bed
-  # total_sleep_duration excludes awake periods and gives actual sleep time
+  # Sum all sleep durations from main night sessions (like Apple Health does)
+  # This gives total actual sleep time across all substantial night sessions
   local total_sleep_seconds=0
-  if [[ -n "$main_sleep_session" && "$main_sleep_session" != "null" ]]; then
-    total_sleep_seconds=$(echo "$main_sleep_session" | jq -r '.total_sleep_duration // 0' 2>/dev/null)
+  local session_count=0
+  local data_source="SESSION_DATA"
+
+  if [[ -n "$sleep_sessions" && "$sleep_sessions" != "null" && "$sleep_sessions" != "[]" ]]; then
+    total_sleep_seconds=$(echo "$sleep_sessions" | jq -r 'map(.total_sleep_duration // 0) | add' 2>/dev/null)
+    session_count=$(echo "$sleep_sessions" | jq -r 'length' 2>/dev/null)
+    [[ -z "$total_sleep_seconds" || "$total_sleep_seconds" == "null" ]] && total_sleep_seconds=0
+  fi
+
+  # Check if data appears incomplete and use fallback if needed
+  # Only apply estimates for current data mode, never for historical queries
+  local data_completeness=$(check_sleep_data_completeness "$total_sleep_seconds" "$most_recent_sleep" "$session_count")
+
+  if [[ "$is_historical" == "false" && "$data_completeness" == "incomplete" ]]; then
+    # Try to get a better estimate from daily sleep data
+    # Check both target date and today as Oura may assign sleep to either date
+    local estimated_sleep=$(estimate_sleep_from_daily_score "$sleep_data" "$main_sleep_date")
+
+    if [[ "$estimated_sleep" == "N/A" ]]; then
+      # Try today's date as Oura assigns sleep to wake-up day
+      estimated_sleep=$(estimate_sleep_from_daily_score "$sleep_data" "$today")
+    fi
+
+    # Only use estimate if it's significantly larger than session data (>50% more)
+    # This prevents minor discrepancies from triggering estimates
+    local threshold=$((total_sleep_seconds * 3 / 2))  # 50% more than current
+    if [[ "$estimated_sleep" != "N/A" && "$estimated_sleep" -gt "$threshold" ]]; then
+      total_sleep_seconds="$estimated_sleep"
+      data_source="ESTIMATED_FROM_SCORE"
+    fi
   fi
   
   # main_sleep_session is already set above for consistency
@@ -672,18 +830,21 @@ format_oura_summary() {
     local wake_time_formatted=$(format_sleep_time "$wake_up_time")
     local duration_formatted=$(seconds_to_hhmm "$total_sleep_seconds")
     
-    # Get sleep stage breakdown from main session for inline display
+    # Get sleep stage breakdown by summing across ALL main night sessions
     local sleep_stages=""
-    if [[ -n "$main_sleep_session" && "$main_sleep_session" != "null" ]]; then
-      local rem_sleep=$(echo "$main_sleep_session" | jq -r '.rem_sleep_duration // 0' 2>/dev/null)
-      local light_sleep=$(echo "$main_sleep_session" | jq -r '.light_sleep_duration // 0' 2>/dev/null)  
-      local deep_sleep=$(echo "$main_sleep_session" | jq -r '.deep_sleep_duration // 0' 2>/dev/null)
-      local total_measured=$(echo "$main_sleep_session" | jq -r '.total_sleep_duration // 0' 2>/dev/null)
-      
-      if [[ "$total_measured" -gt 0 ]]; then
-        local rem_pct=$(echo "scale=0; ($rem_sleep * 100) / $total_measured" | bc 2>/dev/null || echo "0")
-        local light_pct=$(echo "scale=0; ($light_sleep * 100) / $total_measured" | bc 2>/dev/null || echo "0") 
-        local deep_pct=$(echo "scale=0; ($deep_sleep * 100) / $total_measured" | bc 2>/dev/null || echo "0")
+    if [[ -n "$sleep_sessions" && "$sleep_sessions" != "null" && "$sleep_sessions" != "[]" ]]; then
+      local rem_sleep=$(echo "$sleep_sessions" | jq -r 'map(.rem_sleep_duration // 0) | add' 2>/dev/null || echo "0")
+      local light_sleep=$(echo "$sleep_sessions" | jq -r 'map(.light_sleep_duration // 0) | add' 2>/dev/null || echo "0")
+      local deep_sleep=$(echo "$sleep_sessions" | jq -r 'map(.deep_sleep_duration // 0) | add' 2>/dev/null || echo "0")
+
+      [[ -z "$rem_sleep" || "$rem_sleep" == "null" ]] && rem_sleep=0
+      [[ -z "$light_sleep" || "$light_sleep" == "null" ]] && light_sleep=0
+      [[ -z "$deep_sleep" || "$deep_sleep" == "null" ]] && deep_sleep=0
+
+      if [[ "$total_sleep_seconds" -gt 0 ]]; then
+        local rem_pct=$(echo "scale=0; ($rem_sleep * 100) / $total_sleep_seconds" | bc 2>/dev/null || echo "0")
+        local light_pct=$(echo "scale=0; ($light_sleep * 100) / $total_sleep_seconds" | bc 2>/dev/null || echo "0")
+        local deep_pct=$(echo "scale=0; ($deep_sleep * 100) / $total_sleep_seconds" | bc 2>/dev/null || echo "0")
         sleep_stages=" (REM: ${rem_pct}% Light: ${light_pct}% Deep: ${deep_pct}%)"
       fi
     fi
@@ -703,10 +864,26 @@ format_oura_summary() {
       *) sleep_onset_desc="$sleep_onset_source" ;;
     esac
     
+    # Add context about which night's sleep this represents
+    local sleep_night_context=""
+    if [[ "$is_historical" == "true" ]]; then
+      # For historical queries, calculate which evening this sleep represents
+      local sleep_evening_date=$(date -j -v-1d -f "%Y-%m-%d" "$main_sleep_date" "+%m/%d" 2>/dev/null || echo "previous evening")
+      sleep_night_context=" (sleep from $sleep_evening_date evening)"
+    fi
+
     echo "- 🥱 you went to bed at $bedtime_formatted (as detected by $bedtime_desc) and"
-    echo "- 😴   went to sleep at $sleep_onset_formatted (as detected by $sleep_onset_desc) and" 
-    echo "- 🌞    woke up today at $wake_time_formatted (as detected by Oura sleep period tracking)"
-    echo "- 💤      for a total of $duration_formatted sleep$sleep_stages"
+    echo "- 😴   went to sleep at $sleep_onset_formatted (as detected by $sleep_onset_desc) and"
+    echo "- 🌞    woke up at $wake_time_formatted (as detected by Oura sleep period tracking)$sleep_night_context"
+    # Add data source information when using estimates
+    local duration_note=""
+    if [[ "$data_source" == "ESTIMATED_FROM_SCORE" ]]; then
+      duration_note=" (estimated from sleep score due to incomplete API data)"
+    elif [[ "$data_completeness" == "incomplete" ]]; then
+      duration_note=" (API data may be incomplete)"
+    fi
+
+    echo "- 💤      for a total of $duration_formatted sleep$sleep_stages$duration_note"
   fi
   
   if [[ "$most_recent_sleep" != "N/A" ]]; then

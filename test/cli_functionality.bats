@@ -80,8 +80,8 @@ setup() {
   
   # Now properly validates arguments and shows helpful error
   assert_failure
-  assert_output --partial "Error: Invalid date argument '--invalid-flag'"
-  assert_output --partial "Valid options: today, yesterday, weekdays"
+  assert_output --partial "Error: Unknown flag '--invalid-flag'"
+  assert_output --partial "Run 'gday --help' for usage information"
 }
 
 @test "all library files can be sourced without errors" {
@@ -186,8 +186,8 @@ setup() {
   run "$PROJECT_ROOT/bin/gday" invalid
   
   assert_failure
-  assert_output --partial "Error: Invalid date argument 'invalid'"
-  assert_output --partial "Valid options: today, yesterday, weekdays"
+  assert_output --partial "Error: Unable to parse date 'invalid'"
+  assert_output --partial "Supported formats: YYYY-MM-DD, MM/DD/YYYY"
 }
 
 @test "weekday abbreviations work case insensitively" {

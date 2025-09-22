@@ -138,49 +138,54 @@ gday_show_help() {
   echo "gday - Personal calendar and task management tool"
   echo ""
   echo "USAGE:"
-  echo "  gday [COMMAND|DATE]"
+  echo "  gday [COMMAND] [FLAGS] [DATE]"
   echo ""
   echo "COMMANDS:"
   echo "  auth              Re-authenticate with Google Calendar"
   echo "  refresh           Refresh calendar data cache"
   echo "  later             Show only the 'Later Today' section"
   echo "  filtered          Show the list of filtered appointments"
-  echo "  oura, health      Show Oura ring health data for yesterday"
+  echo "  oura, health      Show Oura ring health data"
   echo "  conf, edit, config Edit the configuration file"
   echo "  help, --help, -h  Show this help message"
   echo "  --version, -v     Show version information"
   echo ""
-  echo "HEALTH DATA OPTIONS:"
-  echo "  --oura            Show only Oura ring health data"
-  echo ""
-  echo "SORTING OPTIONS:"
-  echo "  --sort-alpha      Group appointments together (default)"
-  echo "  --sort-interleaved Sort all entries by time (chronological)"
-  echo ""
-  echo "DATE OPTIONS:"
-  echo "  (no args)         Show today's schedule (default)"
-  echo "  yesterday, prev   Show yesterday's schedule"
-  echo "  monday            Show most recent Monday's schedule"
-  echo "  tuesday           Show most recent Tuesday's schedule"
-  echo "  wednesday         Show most recent Wednesday's schedule"
-  echo "  thursday          Show most recent Thursday's schedule"
-  echo "  friday            Show most recent Friday's schedule"
-  echo "  saturday          Show most recent Saturday's schedule"
-  echo "  sunday            Show most recent Sunday's schedule"
+  echo "DATE FLAGS:"
+  echo "  --today           Show today's schedule (default)"
+  echo "  --yesterday, --prev Show yesterday's schedule"
+  echo "  --monday, --mon   Show most recent Monday's schedule"
+  echo "  --tuesday, --tue  Show most recent Tuesday's schedule"
+  echo "  --wednesday, --wed Show most recent Wednesday's schedule"
+  echo "  --thursday, --thu Show most recent Thursday's schedule"
+  echo "  --friday, --fri   Show most recent Friday's schedule"
+  echo "  --saturday, --sat Show most recent Saturday's schedule"
+  echo "  --sunday, --sun   Show most recent Sunday's schedule"
   echo "  YYYY-MM-DD        Show specific date (e.g., 1986-06-05)"
   echo "  MM/DD/YYYY        Show specific date (e.g., 06/05/1986)"
   echo "  \"Month DD, YYYY\"  Show specific date (e.g., \"June 5, 1986\")"
   echo ""
+  echo "SORTING FLAGS:"
+  echo "  --sort-alpha      Group appointments together (default)"
+  echo "  --sort-interleaved Sort all entries by time (chronological)"
+  echo ""
+  echo "HEALTH DATA OPTIONS:"
+  echo "  --oura            Show only Oura ring health data"
+  echo ""
   echo "EXAMPLES:"
   echo "  gday              Show today's full schedule"
-  echo "  gday yesterday    Show yesterday's schedule"
-  echo "  gday friday       Show last Friday's schedule"
+  echo "  gday --yesterday  Show yesterday's schedule"
+  echo "  gday --friday     Show last Friday's schedule"
   echo "  gday 1986-06-05   Show Ferris Bueller's legendary day"
   echo "  gday \"June 5, 1986\" Same date with natural language"
   echo "  gday later        Show only appointments for later today"
   echo "  gday filtered     Show which appointments are filtered out"
-  echo "  gday --sort-interleaved  Show schedule with strict time sorting"
-  echo "  gday --sort-alpha friday Show Friday with appointment grouping"
+  echo "  gday health --yesterday Show yesterday's Oura health data"
+  echo "  gday --sort-interleaved --friday Show Friday with strict time sorting"
+  echo "  gday --sort-alpha --yesterday Show yesterday with appointment grouping"
+  echo ""
+  echo "LEGACY SUPPORT:"
+  echo "  gday yesterday    Still works (same as gday --yesterday)"
+  echo "  gday friday       Still works (same as gday --friday)"
   echo ""
   echo "VERSION: $GDAY_VERSION"
 }
@@ -222,7 +227,7 @@ parse_arbitrary_date() {
 # Normalize weekday input to handle abbreviations
 normalize_weekday() {
   local input=$(echo "$1" | tr '[:upper:]' '[:lower:]')
-  
+
   case "$input" in
     monday|mon) echo "monday" ;;
     tuesday|tues|tue) echo "tuesday" ;;
@@ -235,73 +240,189 @@ normalize_weekday() {
   esac
 }
 
-# Process command line arguments and determine date
-process_date_args() {
-  case "$1" in
-    prev|yesterday|then)
+# Parse command line arguments into commands and flags
+parse_args() {
+  local command=""
+  local date_flag=""
+  local sort_flag=""
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      # Date flags
+      --yesterday|--prev)
+        date_flag="yesterday"
+        shift
+        ;;
+      --today)
+        date_flag="today"
+        shift
+        ;;
+      --monday|--mon)
+        date_flag="monday"
+        shift
+        ;;
+      --tuesday|--tue)
+        date_flag="tuesday"
+        shift
+        ;;
+      --wednesday|--wed)
+        date_flag="wednesday"
+        shift
+        ;;
+      --thursday|--thu)
+        date_flag="thursday"
+        shift
+        ;;
+      --friday|--fri)
+        date_flag="friday"
+        shift
+        ;;
+      --saturday|--sat)
+        date_flag="saturday"
+        shift
+        ;;
+      --sunday|--sun)
+        date_flag="sunday"
+        shift
+        ;;
+      # Sort flags
+      --sort-alpha)
+        sort_flag="alpha"
+        shift
+        ;;
+      --sort-interleaved)
+        sort_flag="interleaved"
+        shift
+        ;;
+      # Commands (prioritize flags over old command style)
+      auth|later|filtered|oura|health|conf|edit|config|refresh|help|--help|-h|--version|-v|--oura|--oura-debug)
+        command="$1"
+        shift
+        ;;
+      # Legacy date arguments (for backward compatibility)
+      prev|yesterday|then)
+        if [[ -z "$date_flag" ]]; then
+          date_flag="yesterday"
+        fi
+        shift
+        ;;
+      # Weekday arguments (legacy) - handle both full names and abbreviations
+      monday|mon|tuesday|tue|tues|wednesday|wed|thursday|thu|thurs|friday|fri|saturday|sat|sunday|sun)
+        if [[ -z "$date_flag" ]]; then
+          normalized_day=$(normalize_weekday "$1")
+          if [[ -n "$normalized_day" ]]; then
+            date_flag="$normalized_day"
+          fi
+        fi
+        shift
+        ;;
+      # Unknown flags starting with --
+      --*)
+        echo "Error: Unknown flag '$1'"
+        echo "Run 'gday --help' for usage information"
+        return 1
+        ;;
+      *)
+        # Try to parse as date format (YYYY-MM-DD, MM/DD/YYYY, etc.) or unknown argument
+        if [[ -z "$date_flag" ]]; then
+          # First try to normalize as weekday (catches uppercase abbreviations)
+          local normalized_day=$(normalize_weekday "$1")
+          if [[ -n "$normalized_day" ]]; then
+            date_flag="$normalized_day"
+          # Then check if it's a potential date format
+          elif [[ "$1" =~ ^[0-9]{4}-[0-9]{1,2}-[0-9]{1,2}$ ]] || [[ "$1" =~ ^[0-9]{1,2}/[0-9]{1,2}/[0-9]{4}$ ]] || [[ "$1" =~ ^[A-Za-z] ]]; then
+            date_flag="custom:$1"
+          else
+            echo "Error: Invalid date argument '$1'"
+            echo "Run 'gday --help' for usage information"
+            return 1
+          fi
+        fi
+        shift
+        ;;
+    esac
+  done
+
+  # Set global variables
+  GDAY_COMMAND="${command:-}"
+  GDAY_DATE_FLAG="${date_flag:-today}"
+  GDAY_SORT_FLAG="${sort_flag:-alpha}"
+}
+
+# Process date flag to set display variables
+process_date_flag() {
+  case "$GDAY_DATE_FLAG" in
+    yesterday)
       date_arg="yesterday"
       display_date=$(date -v -1d "+%m/%d - %A")
       week_number=$(date -v -1d "+%V")
       ;;
-    *)
-      # First check if it's a weekday (full name or abbreviation)
-      normalized_day=$(normalize_weekday "$1")
-      
-      if [[ -n "$normalized_day" ]]; then
-        # It's a valid weekday
-        day_lower="$normalized_day"
-        day_display=$(echo "$day_lower" | sed 's/./\U&/')
+    today)
+      date_arg="today"
+      display_date=$(date "+%m/%d - %A")
+      week_number=$(date "+%V")
+      ;;
+    monday|tuesday|wednesday|thursday|friday|saturday|sunday)
+      # Handle weekday flags
+      day_lower="$GDAY_DATE_FLAG"
+      day_display=$(echo "$day_lower" | sed 's/./\U&/')
 
-        # Find the most recent occurrence of the specified day
-        current_day=$(date "+%A" | tr '[:upper:]' '[:lower:]')
+      # Find the most recent occurrence of the specified day
+      current_day=$(date "+%A" | tr '[:upper:]' '[:lower:]')
 
-        if [[ "$current_day" == "$day_lower" ]]; then
-          # If today is the requested day, just use today
-          date_arg="today"
-          display_date=$(date "+%m/%d - %A")
-          week_number=$(date "+%V")
-        else
-          # Calculate days ago - first get day numbers (0=Sunday, 6=Saturday)
-          current_day_num=$(date "+%w")
-          target_day_num=0
-
-          case "$day_lower" in
-            monday) target_day_num=1 ;;
-            tuesday) target_day_num=2 ;;
-            wednesday) target_day_num=3 ;;
-            thursday) target_day_num=4 ;;
-            friday) target_day_num=5 ;;
-            saturday) target_day_num=6 ;;
-            sunday) target_day_num=0 ;;
-          esac
-
-          # Calculate days to go back
-          days_ago=$(( ($current_day_num - $target_day_num + 7) % 7 ))
-          if [[ $days_ago -eq 0 ]]; then
-            days_ago=7  # If calculated as 0, we want the previous week
-          fi
-
-          # Set the date argument
-          date_arg="$days_ago days ago"
-          display_date=$(date -v "-${days_ago}d" "+%m/%d - %A")
-          week_number=$(date -v "-${days_ago}d" "+%V")
-        fi
-      elif [[ -n "$1" ]] && parse_arbitrary_date "$1"; then
-        # Try to parse as an arbitrary date - Date was successfully parsed, variables set by parse_arbitrary_date
-        return 0
-      elif [[ -z "$1" ]]; then
-        # No argument provided - default to today
+      if [[ "$current_day" == "$day_lower" ]]; then
+        # If today is the requested day, just use today
         date_arg="today"
         display_date=$(date "+%m/%d - %A")
         week_number=$(date "+%V")
       else
-        # Invalid argument provided
-        echo "Error: Invalid date argument '$1'"
-        echo "Valid options: today, yesterday, weekdays (monday/mon, tuesday/tue, etc.), or specific dates (YYYY-MM-DD, MM/DD/YYYY)"
+        # Calculate days ago - reuse existing logic
+        current_day_num=$(date "+%w")
+        target_day_num=0
+
+        case "$day_lower" in
+          sunday) target_day_num=0 ;;
+          monday) target_day_num=1 ;;
+          tuesday) target_day_num=2 ;;
+          wednesday) target_day_num=3 ;;
+          thursday) target_day_num=4 ;;
+          friday) target_day_num=5 ;;
+          saturday) target_day_num=6 ;;
+        esac
+
+        # Calculate days ago
+        if [[ $current_day_num -gt $target_day_num ]]; then
+          days_ago=$((current_day_num - target_day_num))
+        else
+          days_ago=$((7 + current_day_num - target_day_num))
+        fi
+
+        date_arg="$days_ago days ago"
+        display_date=$(date -v-${days_ago}d "+%m/%d - %A")
+        week_number=$(date -v-${days_ago}d "+%V")
+      fi
+      ;;
+    custom:*)
+      # Handle custom date formats
+      custom_date="${GDAY_DATE_FLAG#custom:}"
+      if parse_arbitrary_date "$custom_date"; then
+        # Successfully parsed - variables set by parse_arbitrary_date
+        return 0
+      else
+        echo "Error: Unable to parse date '$custom_date'"
+        echo "Supported formats: YYYY-MM-DD, MM/DD/YYYY, \"Month DD, YYYY\""
         return 1
       fi
       ;;
+    *)
+      # Default to today
+      date_arg="today"
+      display_date=$(date "+%m/%d - %A")
+      week_number=$(date "+%V")
+      ;;
   esac
+
+  return 0
 }
 
 # Process prompts from YAML configuration
@@ -530,7 +651,7 @@ gday_run() {
 
   # Display Oura health data if available
   if [[ -n "$OURA_PAT" ]]; then
-    format_oura_summary
+    show_oura_data_with_date
   fi
 
   # Process and display prompts
@@ -550,9 +671,76 @@ gday_run() {
   echo "$body" | generate_later_today_h2s "$filtered_appointments"
 }
 
+# Show Oura data with date flag support
+show_oura_data_with_date() {
+  # Calculate target date based on the date flag
+  local target_date=""
+  local is_historical="false"
+
+  # For health data, Oura labels sleep sessions by the date they END (morning date):
+  # - "health today" shows today's sleep session (the one that ended this morning)
+  # - "health yesterday" shows yesterday's sleep session (the one that ended yesterday morning)
+  # - This matches how Oura tags sessions in their API
+
+  case "$GDAY_DATE_FLAG" in
+    today)
+      # Today's health = today's sleep session (ended this morning)
+      target_date=$(date "+%Y-%m-%d")
+      is_historical="false"
+      ;;
+    yesterday)
+      # Yesterday's health = yesterday's sleep session
+      target_date=$(date -v -1d "+%Y-%m-%d")
+      is_historical="true"
+      ;;
+    monday|tuesday|wednesday|thursday|friday|saturday|sunday)
+      # Calculate the date for the specified weekday
+      if [[ "$date_arg" =~ ([0-9]+)\ days\ ago ]]; then
+        local days_ago="${BASH_REMATCH[1]}"
+        target_date=$(date -v "-${days_ago}d" "+%Y-%m-%d")
+        is_historical="true"
+      elif [[ "$date_arg" == "today" ]]; then
+        target_date=$(date "+%Y-%m-%d")
+        is_historical="false"
+      else
+        target_date=$(date "+%Y-%m-%d")
+        is_historical="false"
+      fi
+      ;;
+    custom:*)
+      # Use the parsed date directly as Oura labels sessions by end date
+      if [[ "$date_arg" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+        target_date="$date_arg"
+        is_historical="true"
+      else
+        target_date=$(date "+%Y-%m-%d")
+        is_historical="false"
+      fi
+      ;;
+    *)
+      target_date=$(date "+%Y-%m-%d")
+      is_historical="false"
+      ;;
+  esac
+
+  # Call the existing Oura function with the calculated date
+  format_oura_summary "$target_date" "$is_historical"
+}
+
 # Main gday function
 main() {
-  case "$1" in
+  # Parse command line arguments
+  if ! parse_args "$@"; then
+    return 1
+  fi
+
+  # Process date flag to set display variables
+  if ! process_date_flag; then
+    return 1
+  fi
+
+  # Handle commands
+  case "$GDAY_COMMAND" in
     auth)
       echo "Removing gcalcli OAuth token..."
       touch ~/.gcalcli_oauth
@@ -563,7 +751,7 @@ main() {
       ;;
     later)
       # Only show the "Later Today" section
-      gday_later_today_section
+      gday_later_today_section "$GDAY_SORT_FLAG"
       return
       ;;
     filtered)
@@ -572,8 +760,8 @@ main() {
       return
       ;;
     oura|health)
-      # Show Oura ring data
-      show_oura_data
+      # Show Oura ring data with date flag support
+      show_oura_data_with_date
       return
       ;;
     conf|edit|config)
@@ -598,21 +786,9 @@ main() {
       echo "VERSION: $GDAY_VERSION"
       return
       ;;
-    --sort-alpha)
-      # Process with default appointment grouping, remove flag and continue
-      shift
-      gday_run "alpha" "$@"
-      return
-      ;;
-    --sort-interleaved)
-      # Process with chronological interleaving, remove flag and continue
-      shift
-      gday_run "interleaved" "$@"
-      return
-      ;;
     --oura)
       # Show only Oura data
-      show_oura_data
+      show_oura_data_with_date
       return
       ;;
     --oura-debug)
@@ -621,11 +797,6 @@ main() {
       return
       ;;
   esac
-
-  # Process date arguments
-  if ! process_date_args "$1"; then
-    return 1
-  fi
 
   # Load configuration
   if ! gday_load_config; then
@@ -675,8 +846,8 @@ main() {
   # Get calendar data
   local calendar_data=$(gday_get_calendar_data "$date_arg")
 
-  # Process calendar data with default sort type
-  local body=$(gday_process_calendar_data "$calendar_data" "$target_day" "$target_month" "$target_date" "alpha")
+  # Process calendar data with specified sort type
+  local body=$(gday_process_calendar_data "$calendar_data" "$target_day" "$target_month" "$target_date" "$GDAY_SORT_FLAG")
 
   # Format dateline
   local dateline="# $display_date"
@@ -688,7 +859,7 @@ main() {
 
   # Display Oura health data if available
   if [[ -n "$OURA_PAT" ]]; then
-    format_oura_summary
+    show_oura_data_with_date
   fi
 
   # Process and display prompts
