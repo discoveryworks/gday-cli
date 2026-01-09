@@ -528,7 +528,7 @@ process_prompts() {
         local day_of_year=$(date +%j)
         local total_prompts=${#prompts[@]}
         # Calculate starting index for today
-        local start_index=$(( (day_of_year * count) % total_prompts ))
+        local start_index=$(( (10#$day_of_year * count) % total_prompts ))
 
         # Show the specified number of prompts
         for ((i = 0; i < count && i < total_prompts; i++)); do
@@ -543,7 +543,7 @@ process_prompts() {
         local available=("${prompts[@]}")
 
         # Seed random with date for consistency within the day
-        RANDOM=$(date +%j)
+        RANDOM=$((10#$(date +%j)))
 
         # Pick random prompts without replacement
         for ((i = 0; i < count && ${#available[@]} > 0; i++)); do
